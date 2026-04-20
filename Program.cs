@@ -30,14 +30,13 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 // 5. Swagger UI
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Elearning Smart Learn Quiz APP API V1");
-    });
-}
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Elearning Smart Learn Quiz APP API V1");
+    // Optionnel : pour que Swagger soit la page d'accueil (URL de base)
+    options.RoutePrefix = string.Empty;
+});
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
