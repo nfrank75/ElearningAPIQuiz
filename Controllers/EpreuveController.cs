@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Azure.Storage.Blobs;
 using ElearningAPI.DTOs.Epreuve;
 using ElearningAPI.Models.Epreuve;
 using ElearningAPI.Models.Quiz;
@@ -12,42 +11,57 @@ namespace ElearningAPI.Controllers
     [Route("api/[controller]")]
     public class EpreuveController : ControllerBase
     {
-        private readonly AppDbContext  _context;
-        private readonly BlobServiceClient _blobService;
+        private readonly AppDbContext _context;
+        private readonly IWebHostEnvironment _env;
 
-        public EpreuveController(AppDbContext  context, BlobServiceClient blobService)
+        public EpreuveController(AppDbContext context, IWebHostEnvironment env)
         {
             _context = context;
-            _blobService = blobService;
+            _env = env;
         }
 
         // ------------------------------------------------------------
         // 1. UPLOAD EPREUVE (ADMIN)
+        // Swagger-friendly: vrai champ "file"
         // ------------------------------------------------------------
 
         [HttpPost("upload")]
         [Authorize(Roles = "Admin")]
+        [Consumes("multipart/form-data")]
         public async Task<IActionResult> UploadEpreuve(
-            [FromForm] IFormFile file,
-            [FromForm] EpreuveCreateDto dto)
+            IFormFile file,
+            [FromForm] string title,
+            [FromForm] int? year,
+            [FromForm] SubjectType subject,
+            [FromForm] LevelType level,
+            [FromForm] bool isCorrected)
         {
             if (file == null || file.Length == 0)
                 return BadRequest("Aucun fichier fourni.");
 
-            var container = _blobService.GetBlobContainerClient("epreuves");
-            await container.CreateIfNotExistsAsync();
+            var uploadsPath = Path.Combine(_env.ContentRootPath, "Uploads", "Epreuves");
 
-            var blob = container.GetBlobClient($"{Guid.NewGuid()}_{file.FileName}");
-            await blob.UploadAsync(file.OpenReadStream(), overwrite: true);
+            if (!Directory.Exists(uploadsPath))
+                Directory.CreateDirectory(uploadsPath);
+
+            var fileName = $"{Guid.NewGuid()}_{file.FileName}";
+            var filePath = Path.Combine(uploadsPath, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var publicUrl = $"/Uploads/Epreuves/{fileName}";
 
             var epreuve = new Epreuve
             {
-                Title = dto.Title,
-                Year = dto.Year,
-                Subject = dto.Subject,
-                Level = dto.Level,
-                IsCorrected = dto.IsCorrected,
-                PdfFile = blob.Uri.ToString()
+                Title = title,
+                Year = year,
+                Subject = subject,
+                Level = level,
+                IsCorrected = isCorrected,
+                PdfFile = publicUrl
             };
 
             _context.Epreuves.Add(epreuve);
@@ -61,7 +75,7 @@ namespace ElearningAPI.Controllers
                 Subject = epreuve.Subject,
                 Level = epreuve.Level,
                 IsCorrected = epreuve.IsCorrected,
-                PdfFile = epreuve.PdfFile
+                PdfFile = publicUrl
             });
         }
 
