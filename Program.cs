@@ -1,44 +1,54 @@
 using Azure.Storage.Blobs;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.Extensions.FileProviders;
 using dotenv.net;
 
 DotEnv.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
-var mySecretKey = Environment.GetEnvironmentVariable("AZURE_STORAGE_KEY");
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile("appsettings.Production.json", optional: true, reloadOnChange: true);
 
-// 1. Database connection
+// Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 2. Controllers
+// Controllers
 builder.Services.AddControllers();
 
-// 3. Azure Blob Storage
-builder.Services.AddSingleton(x =>
-    new BlobServiceClient(builder.Configuration.GetConnectionString("AzureBlobStorage")));
-
-// 4. Swagger
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// ------------------------------------------------------------
-// IMPORTANT : on construit l'application AVANT d'utiliser "app"
-// ------------------------------------------------------------
 var app = builder.Build();
 
-// 5. Swagger UI
+// Swagger en Production
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "Elearning Smart Learn Quiz APP API V1");
-    // Optionnel : pour que Swagger soit la page d'accueil (URL de base)
     options.RoutePrefix = string.Empty;
 });
 
-app.UseHttpsRedirection();
+// Désactiver HTTPS redirection en Production
+// app.UseHttpsRedirection();
+
 app.UseAuthorization();
+
+// Fichiers statiques (PDF)
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), "Uploads")),
+    RequestPath = "/Uploads"
+});
+
+// API
 app.MapControllers();
+
+// Rendre l’API accessible depuis l’extérieur
+app.Urls.Add("http://0.0.0.0:5000");
+
 app.Run();

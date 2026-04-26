@@ -7,16 +7,8 @@ namespace ElearningAPI.Models.Epreuve
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 
-        public string Title { get; set; } = default!;
-
-        /// <summary>
-        /// URL du fichier PDF stocké dans Azure Blob Storage.
-        /// </summary>
-        public string? PdfFile { get; set; }
-
-        /// <summary>
-        /// Indique si l'épreuve est corrigée ou non.
-        /// </summary>
+        public string Title { get; set; } = default!;// URL locale: /Uploads/Epreuves/xxx.pdf
+        public string? PdfFile { get; set; } // URL locale: /Uploads/Epreuves/xxx.pdf
         public bool IsCorrected { get; set; }
 
         /// <summary>
