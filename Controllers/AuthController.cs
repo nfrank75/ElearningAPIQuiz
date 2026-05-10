@@ -11,10 +11,12 @@ namespace ElearningAPI.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AppDbContext _db;
+        private readonly IConfiguration _config;
 
-        public AuthController(AppDbContext db)
+        public AuthController(AppDbContext db, IConfiguration config)
         {
             _db = db;
+            _config = config;
         }
 
         // ---------------- SIGNUP STUDENT ----------------
@@ -27,29 +29,22 @@ namespace ElearningAPI.Controllers
             if (string.IsNullOrWhiteSpace(dto.Name))
                 return BadRequest("Name is required");
 
-            // Email OU Phone obligatoire
             if (string.IsNullOrWhiteSpace(dto.Email) && string.IsNullOrWhiteSpace(dto.Phone))
                 return BadRequest("Email or phone is required");
 
             if (string.IsNullOrWhiteSpace(dto.Password))
                 return BadRequest("Password is required");
 
-            // Vérifier email si fourni
-            if (!string.IsNullOrWhiteSpace(dto.Email))
-            {
-                if (await _db.Users.AnyAsync(u => u.Email == dto.Email))
-                    return BadRequest("Email already exists");
-            }
+            // Vérification email/phone dans Users
+            if (!string.IsNullOrWhiteSpace(dto.Email) &&
+                await _db.Users.AnyAsync(u => u.Email == dto.Email))
+                return BadRequest("Email already exists");
 
-            // Vérifier phone si fourni
-            if (!string.IsNullOrWhiteSpace(dto.Phone))
-            {
-                if (await _db.Users.AnyAsync(u => u.Phone == dto.Phone))
-                    return BadRequest("Phone already exists");
-            }
+            if (!string.IsNullOrWhiteSpace(dto.Phone) &&
+                await _db.Users.AnyAsync(u => u.Phone == dto.Phone))
+                return BadRequest("Phone already exists");
 
-           
-
+            // Student
             var student = new Student
             {
                 Name = dto.Name,
@@ -67,12 +62,31 @@ namespace ElearningAPI.Controllers
             _db.Students.Add(student);
             await _db.SaveChangesAsync();
 
+            // User (login + JWT)
+            var user = new User
+            {
+                Id = student.Id,
+                Name = dto.Name,
+                Email = dto.Email,
+                Phone = dto.Phone,
+                PasswordHash = student.PasswordHash,
+                Role = "Student",
+                UserType = "Student",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _db.Users.Add(user);
+            await _db.SaveChangesAsync();
+
             return Ok(new
             {
                 message = "Student created successfully",
+                userId = student.Id,
+                name = dto.Name,
+                email = dto.Email,
+                phone = dto.Phone,
                 userType = "Student",
                 role = "Student",
-                userId = student.Id,
                 code = 201
             });
         }
@@ -87,25 +101,22 @@ namespace ElearningAPI.Controllers
             if (string.IsNullOrWhiteSpace(dto.Name))
                 return BadRequest("Name is required");
 
-            // Email OU Phone obligatoire
             if (string.IsNullOrWhiteSpace(dto.Email) && string.IsNullOrWhiteSpace(dto.Phone))
                 return BadRequest("Email or phone is required");
 
             if (string.IsNullOrWhiteSpace(dto.Password))
                 return BadRequest("Password is required");
 
-            if (!string.IsNullOrWhiteSpace(dto.Email))
-            {
-                if (await _db.Users.AnyAsync(u => u.Email == dto.Email))
-                    return BadRequest("Email already exists");
-            }
+            // Vérification email/phone dans Users
+            if (!string.IsNullOrWhiteSpace(dto.Email) &&
+                await _db.Users.AnyAsync(u => u.Email == dto.Email))
+                return BadRequest("Email already exists");
 
-            if (!string.IsNullOrWhiteSpace(dto.Phone))
-            {
-                if (await _db.Users.AnyAsync(u => u.Phone == dto.Phone))
-                    return BadRequest("Phone already exists");
-            }
+            if (!string.IsNullOrWhiteSpace(dto.Phone) &&
+                await _db.Users.AnyAsync(u => u.Phone == dto.Phone))
+                return BadRequest("Phone already exists");
 
+            // Admin
             var admin = new Admin
             {
                 Name = dto.Name,
@@ -118,12 +129,31 @@ namespace ElearningAPI.Controllers
             _db.Admins.Add(admin);
             await _db.SaveChangesAsync();
 
+            // User (login + JWT)
+            var user = new User
+            {
+                Id = admin.Id,
+                Name = dto.Name,
+                Email = dto.Email,
+                Phone = dto.Phone,
+                PasswordHash = admin.PasswordHash,
+                Role = "Admin",
+                UserType = "Admin",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _db.Users.Add(user);
+            await _db.SaveChangesAsync();
+
             return Ok(new
             {
                 message = "Admin created successfully",
+                userId = admin.Id,
+                name = dto.Name,
+                email = dto.Email,
+                phone = dto.Phone,
                 userType = "Admin",
                 role = "Admin",
-                userId = admin.Id,
                 code = 201
             });
         }
@@ -135,10 +165,7 @@ namespace ElearningAPI.Controllers
             if (dto == null)
                 return BadRequest("Invalid request");
 
-            // Email OU Phone obligatoire
-            if (
-                string.IsNullOrWhiteSpace(dto.Email) &&
-                string.IsNullOrWhiteSpace(dto.Phone))
+            if (string.IsNullOrWhiteSpace(dto.Email) && string.IsNullOrWhiteSpace(dto.Phone))
                 return BadRequest("email or phone is required");
 
             if (string.IsNullOrWhiteSpace(dto.Password))
@@ -146,13 +173,9 @@ namespace ElearningAPI.Controllers
 
             User? user = null;
 
-
-
-            // 2. Login via email
-            if (user == null && !string.IsNullOrWhiteSpace(dto.Email))
+            if (!string.IsNullOrWhiteSpace(dto.Email))
                 user = await _db.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
 
-            // 3. Login via phone
             if (user == null && !string.IsNullOrWhiteSpace(dto.Phone))
                 user = await _db.Users.FirstOrDefaultAsync(u => u.Phone == dto.Phone);
 
@@ -162,12 +185,77 @@ namespace ElearningAPI.Controllers
             if (user.PasswordHash != PasswordHasher.Hash(dto.Password))
                 return Unauthorized("Invalid password");
 
+            // Génération des tokens
+            var accessToken = JwtHelper.GenerateAccessToken(user, _config);
+            var refreshToken = JwtHelper.GenerateRefreshToken();
+
+            // Sauvegarder le refresh token
+            var refresh = new RefreshToken
+            {
+                UserId = user.Id,
+                Token = refreshToken,
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _db.RefreshTokens.Add(refresh);
+            await _db.SaveChangesAsync();
+
             return Ok(new
             {
                 message = "Login successful",
-                userType = user.GetType().Name,
+                token = accessToken,
+                refreshToken = refreshToken,
+                role = user.Role,
+                userType = user.UserType,
                 userId = user.Id,
-                code = 200
+                expiresIn = 3600
+            });
+        }
+
+        // ---------------- REFRESH TOKEN ----------------
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken(RefreshTokenRequestDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.RefreshToken))
+                return BadRequest("Invalid request");
+
+            var stored = await _db.RefreshTokens
+                .Include(r => r.User)
+                .FirstOrDefaultAsync(r => r.Token == dto.RefreshToken && r.RevokedAt == null);
+
+            if (stored == null)
+                return Unauthorized("Invalid refresh token");
+
+            if (stored.ExpiresAt < DateTime.UtcNow)
+                return Unauthorized("Refresh token expired");
+
+            var user = stored.User;
+
+            var newAccessToken = JwtHelper.GenerateAccessToken(user, _config);
+            var newRefreshToken = JwtHelper.GenerateRefreshToken();
+
+            stored.RevokedAt = DateTime.UtcNow;
+
+            var newRefresh = new RefreshToken
+            {
+                UserId = user.Id,
+                Token = newRefreshToken,
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _db.RefreshTokens.Add(newRefresh);
+            await _db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                token = newAccessToken,
+                refreshToken = newRefreshToken,
+                role = user.Role,
+                userType = user.UserType,
+                userId = user.Id,
+                expiresIn = 3600
             });
         }
     }

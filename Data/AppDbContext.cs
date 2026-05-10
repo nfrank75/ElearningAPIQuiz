@@ -20,11 +20,11 @@ public class AppDbContext : DbContext
     public DbSet<Question> Questions { get; set; }
     public DbSet<Answer> Answers { get; set; }
 
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
+
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<User>()
-            .HasDiscriminator<string>("UserType")
-            .HasValue<Student>("Student")
-            .HasValue<Admin>("Admin");
+        base.OnModelCreating(modelBuilder);
     }
 }

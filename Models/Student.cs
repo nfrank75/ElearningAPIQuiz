@@ -1,13 +1,20 @@
-namespace ElearningAPI.Models
+using System.ComponentModel.DataAnnotations;
+
+public class Student
 {
-    public class Student : User
-    {
-        public string? Country { get; set; }
-        public string? City { get; set; }
-        public string? SchoolName { get; set; }
-        public string? ClassName { get; set; }
+    [Key]
+    public Guid Id { get; set; }
 
-        public bool IsMember { get; set; } = false;
+    public string Name { get; set; } = string.Empty;
+    public string? Email { get; set; }
+    public string? Phone { get; set; }
+    public string PasswordHash { get; set; } = string.Empty;
 
-    }
+    public string Country { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string SchoolName { get; set; } = string.Empty;
+    public string ClassName { get; set; } = string.Empty;
+
+    public string Role { get; set; } = "Student";
+    public bool IsMember { get; set; } = false;
 }

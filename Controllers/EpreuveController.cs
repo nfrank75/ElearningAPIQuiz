@@ -20,11 +20,7 @@ namespace ElearningAPI.Controllers
             _env = env;
         }
 
-        // ------------------------------------------------------------
-        // 1. UPLOAD EPREUVE (ADMIN)
-        // Swagger-friendly: vrai champ "file"
-        // ------------------------------------------------------------
-
+        // UPLOAD (ADMIN)
         [HttpPost("upload")]
         [Authorize(Roles = "Admin")]
         [Consumes("multipart/form-data")]
@@ -39,18 +35,19 @@ namespace ElearningAPI.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("Aucun fichier fourni.");
 
+            // path : /var/www/elearning-api/Uploads/Epreuves/
             var uploadsPath = Path.Combine(_env.ContentRootPath, "Uploads", "Epreuves");
 
             if (!Directory.Exists(uploadsPath))
                 Directory.CreateDirectory(uploadsPath);
 
-            var fileName = $"{Guid.NewGuid()}_{file.FileName}";
+            var safeTitle = title.Trim().Replace(" ", "_");
+            var extension = Path.GetExtension(file.FileName);
+            var fileName = $"{Guid.NewGuid()}_{safeTitle}{extension}";
             var filePath = Path.Combine(uploadsPath, fileName);
 
             using (var stream = new FileStream(filePath, FileMode.Create))
-            {
                 await file.CopyToAsync(stream);
-            }
 
             var publicUrl = $"/Uploads/Epreuves/{fileName}";
 
@@ -75,22 +72,18 @@ namespace ElearningAPI.Controllers
                 Subject = epreuve.Subject,
                 Level = epreuve.Level,
                 IsCorrected = epreuve.IsCorrected,
-                PdfFile = publicUrl
+                PdfUrl = publicUrl
             });
         }
 
-        // ------------------------------------------------------------
-        // 2. EPREUVES NON CORRIGÉES (PUBLIC)
-        // ------------------------------------------------------------
-
+        // Not corrected
         [HttpGet("uncorrected")]
-        public async Task<IActionResult> GetNonCorrected(
+        public async Task<IActionResult> GetUncorrected(
             [FromQuery] SubjectType? subject,
-            [FromQuery] LevelType? level)
+            [FromQuery] LevelType? level,
+            [FromQuery] int? year)
         {
-            var query = _context.Epreuves
-                .Where(e => !e.IsCorrected)
-                .AsQueryable();
+            var query = _context.Epreuves.Where(e => !e.IsCorrected);
 
             if (subject.HasValue)
                 query = query.Where(e => e.Subject == subject.Value);
@@ -98,52 +91,68 @@ namespace ElearningAPI.Controllers
             if (level.HasValue)
                 query = query.Where(e => e.Level == level.Value);
 
-            return Ok(await query.ToListAsync());
+            if (year.HasValue)
+                query = query.Where(e => e.Year == year.Value);
+
+            var list = await query
+                .OrderByDescending(e => e.Year)
+                .Select(e => new EpreuveResponseDto
+                {
+                    Id = e.Id,
+                    Title = e.Title,
+                    PdfUrl = e.PdfFile!,
+                    IsCorrected = e.IsCorrected,
+                    Year = e.Year,
+                    Subject = e.Subject,
+                    Level = e.Level
+                })
+                .ToListAsync();
+
+            return Ok(list);
         }
 
-        // ------------------------------------------------------------
-        // 3. EPREUVES CORRIGÉES (PUBLIC LIMITÉ À 5)
-        // ------------------------------------------------------------
-
+        // Corrected (PUBLIC limited at 5)
         [HttpGet("corrected/public")]
-        public async Task<IActionResult> GetCorrectedPublic(
-            [FromQuery] SubjectType? subject,
-            [FromQuery] LevelType? level)
+        public async Task<IActionResult> GetCorrectedPublic()
         {
-            var query = _context.Epreuves
+            var list = await _context.Epreuves
                 .Where(e => e.IsCorrected)
-                .AsQueryable();
+                .Take(5)
+                .Select(e => new EpreuveResponseDto
+                {
+                    Id = e.Id,
+                    Title = e.Title,
+                    PdfUrl = e.PdfFile!,
+                    IsCorrected = e.IsCorrected,
+                    Year = e.Year,
+                    Subject = e.Subject,
+                    Level = e.Level
+                })
+                .ToListAsync();
 
-            if (subject.HasValue)
-                query = query.Where(e => e.Subject == subject.Value);
-
-            if (level.HasValue)
-                query = query.Where(e => e.Level == level.Value);
-
-            return Ok(await query.Take(5).ToListAsync());
+            return Ok(list);
         }
 
-        // ------------------------------------------------------------
-        // 4. EPREUVES CORRIGÉES (PRIVÉ ILLIMITÉ)
-        // ------------------------------------------------------------
-
+        // CORRECTED (PRIVATE)
         [HttpGet("corrected")]
         [Authorize]
-        public async Task<IActionResult> GetCorrectedPrivate(
-            [FromQuery] SubjectType? subject,
-            [FromQuery] LevelType? level)
+        public async Task<IActionResult> GetCorrectedPrivate()
         {
-            var query = _context.Epreuves
+            var list = await _context.Epreuves
                 .Where(e => e.IsCorrected)
-                .AsQueryable();
+                .Select(e => new EpreuveResponseDto
+                {
+                    Id = e.Id,
+                    Title = e.Title,
+                    PdfUrl = e.PdfFile!,
+                    IsCorrected = e.IsCorrected,
+                    Year = e.Year,
+                    Subject = e.Subject,
+                    Level = e.Level
+                })
+                .ToListAsync();
 
-            if (subject.HasValue)
-                query = query.Where(e => e.Subject == subject.Value);
-
-            if (level.HasValue)
-                query = query.Where(e => e.Level == level.Value);
-
-            return Ok(await query.ToListAsync());
+            return Ok(list);
         }
     }
 }
