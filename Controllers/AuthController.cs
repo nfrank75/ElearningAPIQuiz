@@ -158,6 +158,7 @@ namespace ElearningAPI.Controllers
             });
         }
 
+
         // ---------------- LOGIN ----------------
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto dto)
@@ -201,6 +202,40 @@ namespace ElearningAPI.Controllers
             _db.RefreshTokens.Add(refresh);
             await _db.SaveChangesAsync();
 
+            // -------------------------
+            //   LOGIN STUDENT
+            // -------------------------
+            if (user.UserType == "Student")
+            {
+                var student = await _db.Students.FirstOrDefaultAsync(s => s.Id == user.Id);
+
+                if (student == null)
+                    return NotFound("Student profile not found");
+
+                return Ok(new
+                {
+                    message = "Login successful",
+                    token = accessToken,
+                    refreshToken = refreshToken,
+                    role = user.Role,
+                    userType = user.UserType,
+                    userId = user.Id,
+                    expiresIn = 3600,
+
+                    // Infos Student
+                    name = student.Name,
+                    email = student.Email,
+                    phone = student.Phone,
+                    country = student.Country,
+                    city = student.City,
+                    schoolName = student.SchoolName,
+                    className = student.ClassName
+                });
+            }
+
+            // -------------------------
+            //   LOGIN ADMIN
+            // -------------------------
             return Ok(new
             {
                 message = "Login successful",
@@ -209,9 +244,15 @@ namespace ElearningAPI.Controllers
                 role = user.Role,
                 userType = user.UserType,
                 userId = user.Id,
-                expiresIn = 3600
+                expiresIn = 3600,
+
+                // Infos Admin
+                name = user.Name,
+                email = user.Email,
+                phone = user.Phone
             });
         }
+
 
         // ---------------- REFRESH TOKEN ----------------
         [HttpPost("refresh-token")]
