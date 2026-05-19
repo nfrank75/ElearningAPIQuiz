@@ -299,5 +299,31 @@ namespace ElearningAPI.Controllers
                 expiresIn = 3600
             });
         }
+
+        // ---------------- LOGOUT ----------------
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout(RefreshTokenRequestDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.RefreshToken))
+                return BadRequest("Refresh token is required");
+
+            var stored = await _db.RefreshTokens
+                .FirstOrDefaultAsync(r => r.Token == dto.RefreshToken && r.RevokedAt == null);
+
+            if (stored == null)
+                return Unauthorized("Invalid or already revoked refresh token");
+
+            // Invalid the refresh token
+            stored.RevokedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Logout successful. Token revoked.",
+                code = 200
+            });
+        }
+
+
     }
 }
