@@ -117,7 +117,7 @@ namespace ElearningAPI.Controllers
                 return BadRequest("Phone already exists");
 
             // Admin
-            var admin = new Admin
+            var admin = new ElearningAPI.Models.Admin
             {
                 Name = dto.Name,
                 Email = dto.Email,
