@@ -57,14 +57,14 @@ namespace ElearningAPI.Migrations
                     b.Property<bool>("IsCorrected")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Level")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("LevelId")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("PdfFile")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("Subject")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("SubjectId")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -74,6 +74,10 @@ namespace ElearningAPI.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("LevelId");
+
+                    b.HasIndex("SubjectId");
 
                     b.ToTable("Epreuves");
                 });
@@ -98,7 +102,7 @@ namespace ElearningAPI.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.ToTable("Answers");
+                    b.ToTable("Answer");
                 });
 
             modelBuilder.Entity("ElearningAPI.Models.Quiz.Question", b =>
@@ -157,17 +161,21 @@ namespace ElearningAPI.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Level")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("LevelId")
+                        .HasColumnType("TEXT");
 
-                    b.Property<int>("Subject")
-                        .HasColumnType("INTEGER");
+                    b.Property<Guid>("SubjectId")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("LevelId");
+
+                    b.HasIndex("SubjectId");
 
                     b.ToTable("Quizzes");
                 });
@@ -199,6 +207,45 @@ namespace ElearningAPI.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("RefreshTokens");
+                });
+
+            modelBuilder.Entity("ElearningAPI.Models.School.Level", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Levels");
+                });
+
+            modelBuilder.Entity("ElearningAPI.Models.School.Subject", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Subjects");
                 });
 
             modelBuilder.Entity("ElearningAPI.Models.Score.Score", b =>
@@ -365,6 +412,25 @@ namespace ElearningAPI.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("ElearningAPI.Models.Epreuve.Epreuve", b =>
+                {
+                    b.HasOne("ElearningAPI.Models.School.Level", "Level")
+                        .WithMany()
+                        .HasForeignKey("LevelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ElearningAPI.Models.School.Subject", "Subject")
+                        .WithMany()
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Level");
+
+                    b.Navigation("Subject");
+                });
+
             modelBuilder.Entity("ElearningAPI.Models.Quiz.Answer", b =>
                 {
                     b.HasOne("ElearningAPI.Models.Quiz.Question", "Question")
@@ -385,6 +451,25 @@ namespace ElearningAPI.Migrations
                         .IsRequired();
 
                     b.Navigation("Quiz");
+                });
+
+            modelBuilder.Entity("ElearningAPI.Models.Quiz.Quizzes", b =>
+                {
+                    b.HasOne("ElearningAPI.Models.School.Level", "Level")
+                        .WithMany()
+                        .HasForeignKey("LevelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ElearningAPI.Models.School.Subject", "Subject")
+                        .WithMany()
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Level");
+
+                    b.Navigation("Subject");
                 });
 
             modelBuilder.Entity("ElearningAPI.Models.RefreshToken", b =>

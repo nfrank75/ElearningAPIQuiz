@@ -1,6 +1,7 @@
 using ElearningAPI.Models;
 using ElearningAPI.Models.Epreuve;
 using ElearningAPI.Models.Quiz;
+using ElearningAPI.Models.School;
 using ElearningAPI.Models.Score;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -12,26 +13,32 @@ public class AppDbContext : DbContext
     {
     }
 
+    // USERS
     public DbSet<User> Users { get; set; }
     public DbSet<Student> Students { get; set; }
     public DbSet<Admin> Admins { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
-    public DbSet<Epreuve> Epreuves { get; set; }
-
+    // QUIZ
     public DbSet<Quizzes> Quizzes { get; set; }
     public DbSet<Question> Questions { get; set; }
-    public DbSet<Answer> Answers { get; set; }
+
+    // SCORES
     public DbSet<Score> Scores { get; set; }
     public DbSet<GuestQuizAttempt> GuestQuizAttempts { get; set; }
 
-    public DbSet<RefreshToken> RefreshTokens { get; set; }
+    // EPREUVES
+    public DbSet<Epreuve> Epreuves { get; set; }
+
+    // NEW: Dynamic Levels & Subjects
+    public DbSet<Level> Levels { get; set; }
+    public DbSet<Subject> Subjects { get; set; }
+
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // IMPORTANT : PAS DE DISCRIMINATOR
-        // Student et Admin ne dérivent plus de User
-
-        // VALUE CONVERTER pour Options (List<string>)
+        // Convert List<string> Options to JSON
         modelBuilder.Entity<Question>()
             .Property(q => q.Options)
             .HasConversion(

@@ -1,6 +1,7 @@
 ﻿using ElearningAPI.DTOs.Quiz;
 using ElearningAPI.DTOs.QuizAdmin;
 using ElearningAPI.Models.Quiz;
+using ElearningAPI.Models.School;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,18 +20,32 @@ namespace ElearningAPI.Controllers.Admin
             _db = db;
         }
 
-        // -----------------------------
+        // ----------------------------------------------------
         // 1. CREATE QUIZ
-        // -----------------------------
+        // ----------------------------------------------------
         [HttpPost("create")]
-        public async Task<IActionResult> CreateQuiz(CreateQuizDto dto)
+        public async Task<IActionResult> CreateQuiz(QuizCreateDto dto)
         {
+            if (dto.SubjectId == null)
+                return BadRequest("subjectId is required");
+
+            if (dto.LevelId == null)
+                return BadRequest("levelId is required");
+
+            var subject = await _db.Subjects.FindAsync(dto.SubjectId);
+            if (subject == null)
+                return BadRequest("Invalid subjectId");
+
+            var level = await _db.Levels.FindAsync(dto.LevelId);
+            if (level == null)
+                return BadRequest("Invalid levelId");
+
             var quiz = new Quizzes
             {
                 Title = dto.Title,
                 DurationMinutes = dto.DurationMinutes,
-                Subject = dto.Subject,
-                Level = dto.Level,
+                SubjectId = dto.SubjectId.Value,
+                LevelId = dto.LevelId.Value,
                 Coefficient = dto.Coefficient,
                 IsActive = true
             };
@@ -41,9 +56,9 @@ namespace ElearningAPI.Controllers.Admin
             return Ok(new { message = "Quiz created", quizId = quiz.Id });
         }
 
-        // -----------------------------
-        // 2. ADD QUESTION TO QUIZ
-        // -----------------------------
+        // ----------------------------------------------------
+        // 2. ADD QUESTION
+        // ----------------------------------------------------
         [HttpPost("{quizId}/add-question")]
         public async Task<IActionResult> AddQuestion(Guid quizId, AddQuestionDto dto)
         {
@@ -68,9 +83,9 @@ namespace ElearningAPI.Controllers.Admin
             return Ok(new { message = "Question added", questionId = question.Id });
         }
 
-        // -----------------------------
+        // ----------------------------------------------------
         // 3. UPDATE QUESTION
-        // -----------------------------
+        // ----------------------------------------------------
         [HttpPut("question/{questionId}")]
         public async Task<IActionResult> UpdateQuestion(Guid questionId, UpdateQuestionDto dto)
         {
@@ -90,9 +105,9 @@ namespace ElearningAPI.Controllers.Admin
             return Ok(new { message = "Question updated" });
         }
 
-        // -----------------------------
+        // ----------------------------------------------------
         // 4. DELETE QUESTION
-        // -----------------------------
+        // ----------------------------------------------------
         [HttpDelete("question/{questionId}")]
         public async Task<IActionResult> DeleteQuestion(Guid questionId)
         {
@@ -106,9 +121,9 @@ namespace ElearningAPI.Controllers.Admin
             return Ok(new { message = "Question deleted" });
         }
 
-        // -----------------------------
-        // 5. ACTIVATE / DEACTIVATE QUIZ
-        // -----------------------------
+        // ----------------------------------------------------
+        // 5. TOGGLE QUIZ
+        // ----------------------------------------------------
         [HttpPut("{quizId}/toggle")]
         public async Task<IActionResult> ToggleQuiz(Guid quizId)
         {
@@ -122,9 +137,9 @@ namespace ElearningAPI.Controllers.Admin
             return Ok(new { message = "Quiz status updated", isActive = quiz.IsActive });
         }
 
-        // -----------------------------
+        // ----------------------------------------------------
         // 6. DELETE QUIZ
-        // -----------------------------
+        // ----------------------------------------------------
         [HttpDelete("{quizId}")]
         public async Task<IActionResult> DeleteQuiz(Guid quizId)
         {
@@ -144,9 +159,8 @@ namespace ElearningAPI.Controllers.Admin
         }
 
         // ----------------------------------------------------
-        // 7. QUIZ STATISTICS (Admin only)
+        // 7. QUIZ STATS
         // ----------------------------------------------------
-        [Authorize(Roles = "Admin")]
         [HttpGet("{quizId}/stats")]
         public async Task<IActionResult> GetQuizStats(Guid quizId)
         {
@@ -180,11 +194,8 @@ namespace ElearningAPI.Controllers.Admin
             float avg = scores.Average(s => s.Value);
             float max = scores.Max(s => s.Value);
             float min = scores.Min(s => s.Value);
-
-            // Success = score >= 50%
             float successRate = scores.Count(s => s.Value >= 50) * 100f / total;
 
-            // Difficulty estimation
             string difficulty =
                 avg >= 80 ? "Very Easy" :
                 avg >= 60 ? "Easy" :
@@ -192,30 +203,29 @@ namespace ElearningAPI.Controllers.Admin
                 avg >= 20 ? "Hard" :
                 "Very Hard";
 
-                // Score distribution
-                var distribution = new Dictionary<string, int>
-        {
-            { "0-50", scores.Count(s => s.Value < 50) },
-            { "50-70", scores.Count(s => s.Value >= 50 && s.Value < 70) },
-            { "70-90", scores.Count(s => s.Value >= 70 && s.Value < 90) },
-            { "90-100", scores.Count(s => s.Value >= 90) }
-        };
+            var distribution = new Dictionary<string, int>
+            {
+                { "0-50", scores.Count(s => s.Value < 50) },
+                { "50-70", scores.Count(s => s.Value >= 50 && s.Value < 70) },
+                { "70-90", scores.Count(s => s.Value >= 70 && s.Value < 90) },
+                { "90-100", scores.Count(s => s.Value >= 90) }
+            };
 
-                int avgTime = (int)scores.Average(s => s.TimeUsedMinutes);
+            int avgTime = (int)scores.Average(s => s.TimeUsedMinutes);
 
-                return Ok(new QuizStatsDto
-                {
-                    QuizId = quizId,
-                    Title = quiz.Title,
-                    TotalAttempts = total,
-                    AverageScore = avg,
-                    MaxScore = max,
-                    MinScore = min,
-                    SuccessRate = successRate,
-                    Difficulty = difficulty,
-                    ScoreDistribution = distribution,
-                    AverageTimeUsed = avgTime
-                });
-            }
+            return Ok(new QuizStatsDto
+            {
+                QuizId = quizId,
+                Title = quiz.Title,
+                TotalAttempts = total,
+                AverageScore = avg,
+                MaxScore = max,
+                MinScore = min,
+                SuccessRate = successRate,
+                Difficulty = difficulty,
+                ScoreDistribution = distribution,
+                AverageTimeUsed = avgTime
+            });
+        }
     }
 }

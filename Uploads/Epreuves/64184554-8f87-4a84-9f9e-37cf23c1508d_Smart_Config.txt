@@ -1,0 +1,8 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=tcp:elearning-sqlserver.database.windows.net,1433;Initial Catalog=elearning-db;Persist Security Info=False;User ID=sqladmin;Password=Nfrank75@;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;",
+    "AzureBlobStorage": "DefaultEndpointsProtocol=https;AccountName=elearningstockage;AccountKey=dqxDekmZoZT3+X4e2kple/+y3/AaWsEGpNQjLnG41b+HswyXoQKRiFJUMg3npOlW0P+WSc3Y8M5Y+AStF8AJcw==;EndpointSuffix=core.windows.net"
+
+
+  }
+}

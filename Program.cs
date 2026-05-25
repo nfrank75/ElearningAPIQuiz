@@ -100,6 +100,11 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SchemaFilter<GuidSchemaFilter>();
+});
+
 var app = builder.Build();
 
 // Swagger
