@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ElearningAPI.DTOs.Epreuve;
 using ElearningAPI.Models.Epreuve;
-using ElearningAPI.Models.Quiz;
+using ElearningAPI.Models.School;
 
 namespace ElearningAPI.Controllers
 {
@@ -20,7 +20,9 @@ namespace ElearningAPI.Controllers
             _env = env;
         }
 
-        // UPLOAD (ADMIN)
+        // ----------------------------------------------------
+        // 1. UPLOAD EPREUVE (ADMIN)
+        // ----------------------------------------------------
         [HttpPost("upload")]
         [Authorize(Roles = "Admin")]
         [Consumes("multipart/form-data")]
@@ -28,14 +30,24 @@ namespace ElearningAPI.Controllers
             IFormFile file,
             [FromForm] string title,
             [FromForm] int? year,
-            [FromForm] SubjectType subject,
-            [FromForm] LevelType level,
+            [FromForm] Guid subjectId,
+            [FromForm] Guid levelId,
             [FromForm] bool isCorrected)
         {
             if (file == null || file.Length == 0)
                 return BadRequest("Aucun fichier fourni.");
 
-            // path : /var/www/elearning-api/Uploads/Epreuves/
+            // Validate subject
+            var subject = await _context.Subjects.FindAsync(subjectId);
+            if (subject == null)
+                return BadRequest("Invalid subjectId");
+
+            // Validate level
+            var level = await _context.Levels.FindAsync(levelId);
+            if (level == null)
+                return BadRequest("Invalid levelId");
+
+            // Path: /var/www/elearning-api/Uploads/Epreuves/
             var uploadsPath = Path.Combine(_env.ContentRootPath, "Uploads", "Epreuves");
 
             if (!Directory.Exists(uploadsPath))
@@ -55,8 +67,8 @@ namespace ElearningAPI.Controllers
             {
                 Title = title,
                 Year = year,
-                Subject = subject,
-                Level = level,
+                SubjectId = subjectId,
+                LevelId = levelId,
                 IsCorrected = isCorrected,
                 PdfFile = publicUrl
             };
@@ -69,27 +81,33 @@ namespace ElearningAPI.Controllers
                 Id = epreuve.Id,
                 Title = epreuve.Title,
                 Year = epreuve.Year,
-                Subject = epreuve.Subject,
-                Level = epreuve.Level,
+                Subject = subject.Name,
+                Level = level.Name,
                 IsCorrected = epreuve.IsCorrected,
                 PdfUrl = publicUrl
             });
         }
 
-        // Not corrected
+        // ----------------------------------------------------
+        // 2. GET UNCORRECTED EPREUVES (PUBLIC)
+        // ----------------------------------------------------
         [HttpGet("uncorrected")]
         public async Task<IActionResult> GetUncorrected(
-            [FromQuery] SubjectType? subject,
-            [FromQuery] LevelType? level,
+            [FromQuery] Guid? subjectId,
+            [FromQuery] Guid? levelId,
             [FromQuery] int? year)
         {
-            var query = _context.Epreuves.Where(e => !e.IsCorrected);
+            var query = _context.Epreuves
+                .Include(e => e.Subject)
+                .Include(e => e.Level)
+                .Where(e => !e.IsCorrected)
+                .AsQueryable();
 
-            if (subject.HasValue)
-                query = query.Where(e => e.Subject == subject.Value);
+            if (subjectId.HasValue)
+                query = query.Where(e => e.SubjectId == subjectId.Value);
 
-            if (level.HasValue)
-                query = query.Where(e => e.Level == level.Value);
+            if (levelId.HasValue)
+                query = query.Where(e => e.LevelId == levelId.Value);
 
             if (year.HasValue)
                 query = query.Where(e => e.Year == year.Value);
@@ -103,20 +121,25 @@ namespace ElearningAPI.Controllers
                     PdfUrl = e.PdfFile!,
                     IsCorrected = e.IsCorrected,
                     Year = e.Year,
-                    Subject = e.Subject,
-                    Level = e.Level
+                    Subject = e.Subject.Name,
+                    Level = e.Level.Name
                 })
                 .ToListAsync();
 
             return Ok(list);
         }
 
-        // Corrected (PUBLIC limited at 5)
+        // ----------------------------------------------------
+        // 3. GET CORRECTED EPREUVES (PUBLIC, LIMIT 5)
+        // ----------------------------------------------------
         [HttpGet("corrected/public")]
         public async Task<IActionResult> GetCorrectedPublic()
         {
             var list = await _context.Epreuves
+                .Include(e => e.Subject)
+                .Include(e => e.Level)
                 .Where(e => e.IsCorrected)
+                .OrderByDescending(e => e.Year)
                 .Take(5)
                 .Select(e => new EpreuveResponseDto
                 {
@@ -125,21 +148,26 @@ namespace ElearningAPI.Controllers
                     PdfUrl = e.PdfFile!,
                     IsCorrected = e.IsCorrected,
                     Year = e.Year,
-                    Subject = e.Subject,
-                    Level = e.Level
+                    Subject = e.Subject.Name,
+                    Level = e.Level.Name
                 })
                 .ToListAsync();
 
             return Ok(list);
         }
 
-        // CORRECTED (PRIVATE)
+        // ----------------------------------------------------
+        // 4. GET CORRECTED EPREUVES (PRIVATE, FULL LIST)
+        // ----------------------------------------------------
         [HttpGet("corrected")]
         [Authorize]
         public async Task<IActionResult> GetCorrectedPrivate()
         {
             var list = await _context.Epreuves
+                .Include(e => e.Subject)
+                .Include(e => e.Level)
                 .Where(e => e.IsCorrected)
+                .OrderByDescending(e => e.Year)
                 .Select(e => new EpreuveResponseDto
                 {
                     Id = e.Id,
@@ -147,8 +175,8 @@ namespace ElearningAPI.Controllers
                     PdfUrl = e.PdfFile!,
                     IsCorrected = e.IsCorrected,
                     Year = e.Year,
-                    Subject = e.Subject,
-                    Level = e.Level
+                    Subject = e.Subject.Name,
+                    Level = e.Level.Name
                 })
                 .ToListAsync();
 

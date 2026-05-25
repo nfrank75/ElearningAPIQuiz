@@ -59,7 +59,6 @@ namespace ElearningAPI.Controllers
                     name = student.Name,
                     firstName = student.FirstName,
                     email = student.Email,
-                    phone = student.Phone,
 
                     country = student.Country,
                     region = student.Region,
@@ -127,7 +126,6 @@ namespace ElearningAPI.Controllers
                 // Student fields
                 if (!string.IsNullOrWhiteSpace(dto.Name)) student.Name = dto.Name;
                 if (!string.IsNullOrWhiteSpace(dto.FirstName)) student.FirstName = dto.FirstName;
-                if (!string.IsNullOrWhiteSpace(dto.Phone)) student.Phone = dto.Phone;
 
                 if (!string.IsNullOrWhiteSpace(dto.Country)) student.Country = dto.Country;
                 if (!string.IsNullOrWhiteSpace(dto.Region)) student.Region = dto.Region;
@@ -143,7 +141,6 @@ namespace ElearningAPI.Controllers
                 // User fields
                 if (!string.IsNullOrWhiteSpace(dto.Name)) user.Name = dto.Name;
                 if (!string.IsNullOrWhiteSpace(dto.FirstName)) user.FirstName = dto.FirstName;
-                if (!string.IsNullOrWhiteSpace(dto.Phone)) user.Phone = dto.Phone;
 
                 await _db.SaveChangesAsync();
 
@@ -157,7 +154,6 @@ namespace ElearningAPI.Controllers
                     name = student.Name,
                     firstName = student.FirstName,
                     email = student.Email,
-                    phone = student.Phone,
 
                     country = student.Country,
                     region = student.Region,
@@ -179,7 +175,6 @@ namespace ElearningAPI.Controllers
             // ---------------------------------------------------------
             if (!string.IsNullOrWhiteSpace(dto.Name)) user.Name = dto.Name;
             if (!string.IsNullOrWhiteSpace(dto.FirstName)) user.FirstName = dto.FirstName;
-            if (!string.IsNullOrWhiteSpace(dto.Phone)) user.Phone = dto.Phone;
 
             await _db.SaveChangesAsync();
 
@@ -193,7 +188,6 @@ namespace ElearningAPI.Controllers
                 name = user.Name,
                 firstName = user.FirstName,
                 email = user.Email,
-                phone = user.Phone,
                 avatar = user.AvatarUrl
             });
         }
@@ -228,7 +222,7 @@ namespace ElearningAPI.Controllers
             if (user.UserType == "Student")
             {
                 var student = await _db.Students.FirstOrDefaultAsync(s => s.Id == guid);
-                student.Email = dto.NewEmail;
+                if (student != null) student.Email = dto.NewEmail;
             }
 
             await _db.SaveChangesAsync();
@@ -266,7 +260,7 @@ namespace ElearningAPI.Controllers
             if (user.UserType == "Student")
             {
                 var student = await _db.Students.FirstOrDefaultAsync(s => s.Id == guid);
-                student.Phone = dto.NewPhone;
+                if (student != null) student.Phone = dto.NewPhone;
             }
 
             await _db.SaveChangesAsync();
@@ -315,7 +309,7 @@ namespace ElearningAPI.Controllers
             if (user.UserType == "Student")
             {
                 var student = await _db.Students.FirstOrDefaultAsync(s => s.Id == guid);
-                student.AvatarUrl = url;
+                if (student != null) student.AvatarUrl = url;
             }
 
             await _db.SaveChangesAsync();
