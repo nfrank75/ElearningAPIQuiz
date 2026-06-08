@@ -10,11 +10,11 @@ namespace ElearningAPI.Controllers.Admin
     [ApiController]
     [Route("api/admin/subjects")]
     [Authorize(Roles = "Admin")]
-    public class SubjectsController : ControllerBase
+    public class SubjectsAdminController : ControllerBase
     {
         private readonly AppDbContext _db;
 
-        public SubjectsController(AppDbContext db)
+        public SubjectsAdminController(AppDbContext db)
         {
             _db = db;
         }
@@ -36,29 +36,32 @@ namespace ElearningAPI.Controllers.Admin
             return Ok(subject);
         }
 
-        // GET ALL
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetSubjects()
-        {
-            var subjects = await _db.Subjects
-                .OrderBy(s => s.Name)
-                .ToListAsync();
+        //// GET ALL
+        //[HttpGet]
+        //[AllowAnonymous]
+        //public async Task<IActionResult> GetSubjects()
+        //{
+        //    var subjects = await _db.Subjects
+        //        .OrderBy(s => s.Name)
+        //        .ToListAsync();
 
-            return Ok(subjects);
-        }
+        //    return Ok(subjects);
+        //}
 
-        // GET ONE
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetSubject(Guid id)
-        {
-            var subject = await _db.Subjects.FindAsync(id);
-            if (subject == null)
-                return NotFound("Subject not found.");
+        //// GET ONE
+        //[HttpGet("{id}")]
 
-            return Ok(subject);
-        }
+        //[AllowAnonymous]
+        //public async Task<IActionResult> GetSubject(Guid id)
+        //{
+        //    var subject = await _db.Subjects.FindAsync(id);
+        //    if (subject == null)
+        //        return NotFound("Subject not found.");
 
+        //    return Ok(subject);
+        //}
+
+        
         // UPDATE
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateSubject(Guid id, UpdateSubjectDto dto)

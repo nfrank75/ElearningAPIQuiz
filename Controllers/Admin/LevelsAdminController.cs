@@ -10,11 +10,11 @@ namespace ElearningAPI.Controllers.Admin
     [ApiController]
     [Route("api/admin/levels")]
     [Authorize(Roles = "Admin")]
-    public class LevelsController : ControllerBase
+    public class LevelsAdminController : ControllerBase
     {
         private readonly AppDbContext _db;
 
-        public LevelsController(AppDbContext db)
+        public LevelsAdminController(AppDbContext db)
         {
             _db = db;
         }
@@ -37,27 +37,31 @@ namespace ElearningAPI.Controllers.Admin
             return Ok(level);
         }
 
-        // GET ALL
-        [HttpGet]
-        public async Task<IActionResult> GetLevels()
-        {
-            var levels = await _db.Levels
-                .OrderBy(l => l.Order)
-                .ToListAsync();
+        //// GET ALL
+        //[HttpGet]
 
-            return Ok(levels);
-        }
+        //[AllowAnonymous]
+        //public async Task<IActionResult> GetLevels()
+        //{
+        //    var levels = await _db.Levels
+        //        .OrderBy(l => l.Order)
+        //        .ToListAsync();
 
-        // GET ONE
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetLevel(Guid id)
-        {
-            var level = await _db.Levels.FindAsync(id);
-            if (level == null)
-                return NotFound("Level not found.");
+        //    return Ok(levels);
+        //}
 
-            return Ok(level);
-        }
+        //// GET ONE
+        //[HttpGet("{id}")]
+
+        //[AllowAnonymous]
+        //public async Task<IActionResult> GetLevel(Guid id)
+        //{
+        //    var level = await _db.Levels.FindAsync(id);
+        //    if (level == null)
+        //        return NotFound("Level not found.");
+
+        //    return Ok(level);
+        //}
 
         // UPDATE
         [HttpPut("{id}")]
