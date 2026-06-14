@@ -24,7 +24,13 @@ namespace ElearningAPI.Controllers
         [HttpGet("my")]
         public async Task<IActionResult> GetMyScores()
         {
-            var studentId = Guid.Parse(User.FindFirst("sub")!.Value);
+
+            var sub = User.FindFirst("sub")?.Value;
+
+            if (sub == null)
+                return Unauthorized("Invalid token: missing 'sub' claim.");
+
+            var studentId = Guid.Parse(sub);
 
             var scores = await _db.Scores
                 .Where(s => s.StudentId == studentId)
@@ -35,8 +41,8 @@ namespace ElearningAPI.Controllers
                     ScoreId = s.Id,
                     QuizId = s.QuizId,
                     QuizTitle = s.Quiz.Title,
-                    Subject = s.Quiz.Subject.ToString(),
-                    Level = s.Quiz.Level.ToString(),
+                    SubjectId = s.Quiz.SubjectId,
+                    LevelId = s.Quiz.LevelId,
                     Value = s.Value,
                     TimeUsedMinutes = s.TimeUsedMinutes,
                     TakenAt = s.TakenAt
@@ -86,8 +92,8 @@ namespace ElearningAPI.Controllers
                     StudentId = s.StudentId,
                     StudentName = s.Student.Name,
                     QuizTitle = s.Quiz.Title,
-                    Subject = s.Quiz.Subject.ToString(),
-                    Level = s.Quiz.Level.ToString(),
+                    SubjectId = s.Quiz.SubjectId,
+                    LevelId = s.Quiz.LevelId,
                     Score = s.Value,
                     TimeUsedMinutes = s.TimeUsedMinutes,
                     TakenAt = s.TakenAt
