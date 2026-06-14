@@ -81,10 +81,12 @@ namespace ElearningAPI.Controllers
                 Id = epreuve.Id,
                 Title = epreuve.Title,
                 Year = epreuve.Year,
-                Subject = subject.Name,
-                Level = level.Name,
+                PdfUrl = publicUrl,
                 IsCorrected = epreuve.IsCorrected,
-                PdfUrl = publicUrl
+
+                SubjectId = subject.Id,
+
+                LevelId = level.Id
             });
         }
 
@@ -112,21 +114,23 @@ namespace ElearningAPI.Controllers
             if (year.HasValue)
                 query = query.Where(e => e.Year == year.Value);
 
-            var list = await query
-                .OrderByDescending(e => e.Year)
-                .Select(e => new EpreuveResponseDto
-                {
-                    Id = e.Id,
-                    Title = e.Title,
-                    PdfUrl = e.PdfFile!,
-                    IsCorrected = e.IsCorrected,
-                    Year = e.Year,
-                    Subject = e.Subject.Name,
-                    Level = e.Level.Name
-                })
-                .ToListAsync();
+                var list = await query
+        .OrderByDescending(e => e.Year)
+        .Select(e => new EpreuveResponseDto
+        {
+            Id = e.Id,
+            Title = e.Title,
+            PdfUrl = e.PdfFile!,
+            IsCorrected = e.IsCorrected,
+            Year = e.Year,
 
-            return Ok(list);
+            SubjectId = e.SubjectId,
+
+            LevelId = e.LevelId
+        })
+        .ToListAsync();
+
+                return Ok(list);
         }
 
         // ----------------------------------------------------
@@ -135,26 +139,28 @@ namespace ElearningAPI.Controllers
         [HttpGet("corrected/public")]
         public async Task<IActionResult> GetCorrectedPublic()
         {
-            var list = await _context.Epreuves
-                .Include(e => e.Subject)
-                .Include(e => e.Level)
-                .Where(e => e.IsCorrected)
-                .OrderByDescending(e => e.Year)
-                .Take(5)
-                .Select(e => new EpreuveResponseDto
-                {
-                    Id = e.Id,
-                    Title = e.Title,
-                    PdfUrl = e.PdfFile!,
-                    IsCorrected = e.IsCorrected,
-                    Year = e.Year,
-                    Subject = e.Subject.Name,
-                    Level = e.Level.Name
-                })
-                .ToListAsync();
+                var list = await _context.Epreuves
+        .Include(e => e.Subject)
+        .Include(e => e.Level)
+        .Where(e => e.IsCorrected)
+        .OrderByDescending(e => e.Year)
+        .Take(5)
+        .Select(e => new EpreuveResponseDto
+        {
+            Id = e.Id,
+            Title = e.Title,
+            PdfUrl = e.PdfFile!,
+            IsCorrected = e.IsCorrected,
+            Year = e.Year,
 
-            return Ok(list);
-        }
+            SubjectId = e.SubjectId,
+
+            LevelId = e.LevelId
+        })
+        .ToListAsync();
+
+                return Ok(list);
+            }
 
         // ----------------------------------------------------
         // 4. GET CORRECTED EPREUVES (PRIVATE, FULL LIST)
@@ -163,24 +169,26 @@ namespace ElearningAPI.Controllers
         [Authorize]
         public async Task<IActionResult> GetCorrectedPrivate()
         {
-            var list = await _context.Epreuves
-                .Include(e => e.Subject)
-                .Include(e => e.Level)
-                .Where(e => e.IsCorrected)
-                .OrderByDescending(e => e.Year)
-                .Select(e => new EpreuveResponseDto
-                {
-                    Id = e.Id,
-                    Title = e.Title,
-                    PdfUrl = e.PdfFile!,
-                    IsCorrected = e.IsCorrected,
-                    Year = e.Year,
-                    Subject = e.Subject.Name,
-                    Level = e.Level.Name
-                })
-                .ToListAsync();
+                var list = await _context.Epreuves
+        .Include(e => e.Subject)
+        .Include(e => e.Level)
+        .Where(e => e.IsCorrected)
+        .OrderByDescending(e => e.Year)
+        .Select(e => new EpreuveResponseDto
+        {
+            Id = e.Id,
+            Title = e.Title,
+            PdfUrl = e.PdfFile!,
+            IsCorrected = e.IsCorrected,
+            Year = e.Year,
 
-            return Ok(list);
+            SubjectId = e.SubjectId,
+
+            LevelId = e.LevelId
+        })
+        .ToListAsync();
+
+                return Ok(list);
         }
     }
 }

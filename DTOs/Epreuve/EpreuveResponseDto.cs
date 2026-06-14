@@ -7,7 +7,8 @@
         public string PdfUrl { get; set; } = default!;
         public bool IsCorrected { get; set; }
         public int? Year { get; set; }
-        public string Subject { get; set; } = default!;
-        public string Level { get; set; } = default!;
+
+        public Guid SubjectId { get; set; }
+        public Guid LevelId { get; set; }
     }
 }
