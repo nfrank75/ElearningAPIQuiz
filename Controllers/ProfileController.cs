@@ -1,6 +1,6 @@
 ﻿using ElearningAPI.DTOs;
 using ElearningAPI.DTOs.Profile;
-using ElearningAPI.Models;
+using ElearningAPI.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -97,22 +97,24 @@ namespace ElearningAPI.Controllers
         // ---------------------------------------------------------
         [Authorize]
         [HttpPut("update")]
-        public async Task<IActionResult> UpdateProfile(ProfileUpdateDto dto)
+        public async Task<IActionResult> UpdateProfile([FromBody] ProfileUpdateDto dto)
         {
-            if (dto == null)
-                return BadRequest("Invalid request");
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
-                         ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            // Lire l'ID utilisateur (logique unifiée)
+            var userId =
+                User.FindFirstValue("sub") ??
+                User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (string.IsNullOrWhiteSpace(userId))
-                return Unauthorized("Invalid token");
+                return Unauthorized("Invalid token.");
 
             var guid = Guid.Parse(userId);
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == guid);
 
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == guid);
             if (user == null)
-                return NotFound("User not found");
+                return NotFound("User not found.");
 
             // ---------------------------------------------------------
             //  STUDENT UPDATE (full profile)
@@ -121,7 +123,7 @@ namespace ElearningAPI.Controllers
             {
                 var student = await _db.Students.FirstOrDefaultAsync(s => s.Id == guid);
                 if (student == null)
-                    return NotFound("Student profile not found");
+                    return NotFound("Student profile not found.");
 
                 // Student fields
                 if (!string.IsNullOrWhiteSpace(dto.Name)) student.Name = dto.Name;
@@ -138,7 +140,7 @@ namespace ElearningAPI.Controllers
                 if (dto.BirthYear.HasValue) student.BirthYear = dto.BirthYear;
                 if (!string.IsNullOrWhiteSpace(dto.FavoriteSubject)) student.FavoriteSubject = dto.FavoriteSubject;
 
-                // User fields
+                // User fields (synchronisation)
                 if (!string.IsNullOrWhiteSpace(dto.Name)) user.Name = dto.Name;
                 if (!string.IsNullOrWhiteSpace(dto.FirstName)) user.FirstName = dto.FirstName;
 
@@ -195,78 +197,175 @@ namespace ElearningAPI.Controllers
         // ---------------------------------------------------------
         //  UPDATE EMAIL /api/Profile/update-email
         // ---------------------------------------------------------
+
         [Authorize]
         [HttpPut("update-email")]
-        public async Task<IActionResult> UpdateEmail(UpdateEmailDto dto)
+        public async Task<IActionResult> UpdateEmail([FromBody] UpdateEmailDto dto)
         {
-            if (dto == null || string.IsNullOrWhiteSpace(dto.NewEmail))
-                return BadRequest("Email is required");
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
-                         ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            var userId =
+                User.FindFirstValue("sub") ??
+                User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (string.IsNullOrWhiteSpace(userId))
-                return Unauthorized("Invalid token");
+                return Unauthorized("Invalid token.");
 
             var guid = Guid.Parse(userId);
+
             var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == guid);
-
             if (user == null)
-                return NotFound("User not found");
+                return NotFound("User not found.");
 
-            if (await _db.Users.AnyAsync(u => u.Email == dto.NewEmail))
-                return BadRequest("Email already exists");
+            // 1. Vérifier l’ancien email
+            if (!string.Equals(user.Email, dto.CurrentEmail, StringComparison.OrdinalIgnoreCase))
+                return BadRequest("Current email is incorrect.");
 
+            // 2. Vérifier le mot de passe (même logique que LOGIN)
+            if (user.PasswordHash != PasswordHasher.Hash(dto.Password))
+                return Unauthorized("Invalid password");
+
+            // 3. Vérifier que le nouvel email n’est pas déjà utilisé
+            var exists = await _db.Users.AnyAsync(u => u.Email == dto.NewEmail && u.Id != guid);
+            if (exists)
+                return BadRequest("This email is already used by another account.");
+
+            // 4. Mise à jour dans Users
             user.Email = dto.NewEmail;
 
+            // 5. Mise à jour dans Students si applicable
             if (user.UserType == "Student")
             {
                 var student = await _db.Students.FirstOrDefaultAsync(s => s.Id == guid);
-                if (student != null) student.Email = dto.NewEmail;
+                if (student != null)
+                    student.Email = dto.NewEmail;
             }
 
             await _db.SaveChangesAsync();
 
-            return Ok(new { message = "Email updated successfully", email = dto.NewEmail });
+            // 6. Forcer la reconnexion
+            return Ok(new
+            {
+                message = "Email updated successfully. Please login again.",
+                newEmail = dto.NewEmail
+            });
         }
+
+
+
 
         // ---------------------------------------------------------
         //  UPDATE PHONE /api/Profile/update-phone
         // ---------------------------------------------------------
         [Authorize]
         [HttpPut("update-phone")]
-        public async Task<IActionResult> UpdatePhone(UpdatePhoneDto dto)
+        public async Task<IActionResult> UpdatePhone([FromBody] UpdatePhoneDto dto)
         {
-            if (dto == null || string.IsNullOrWhiteSpace(dto.NewPhone))
-                return BadRequest("Phone is required");
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
-                         ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            // Lire l'ID utilisateur (même logique que update-email)
+            var userId =
+                User.FindFirstValue("sub") ??
+                User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (string.IsNullOrWhiteSpace(userId))
-                return Unauthorized("Invalid token");
+                return Unauthorized("Invalid token.");
 
             var guid = Guid.Parse(userId);
+
             var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == guid);
-
             if (user == null)
-                return NotFound("User not found");
+                return NotFound("User not found.");
 
-            if (await _db.Users.AnyAsync(u => u.Phone == dto.NewPhone))
+            // 1. Vérifier l'ancien numéro
+            if (!string.Equals(user.Phone, dto.CurrentPhone, StringComparison.OrdinalIgnoreCase))
+                return BadRequest("Current phone is incorrect.");
+
+            // 2. Vérifier le mot de passe (même logique que LOGIN)
+            if (user.PasswordHash != PasswordHasher.Hash(dto.Password))
+                return Unauthorized("Invalid password");
+
+            // 3. Vérifier que le nouveau numéro n'existe pas déjà
+            var exists = await _db.Users.AnyAsync(u => u.Phone == dto.NewPhone && u.Id != guid);
+            if (exists)
                 return BadRequest("Phone already exists");
 
+            // 4. Mise à jour dans Users
             user.Phone = dto.NewPhone;
 
+            // 5. Mise à jour dans Students si applicable
             if (user.UserType == "Student")
             {
                 var student = await _db.Students.FirstOrDefaultAsync(s => s.Id == guid);
-                if (student != null) student.Phone = dto.NewPhone;
+                if (student != null)
+                    student.Phone = dto.NewPhone;
             }
 
             await _db.SaveChangesAsync();
 
-            return Ok(new { message = "Phone updated successfully", phone = dto.NewPhone });
+            return Ok(new
+            {
+                message = "Phone updated successfully",
+                phone = dto.NewPhone
+            });
         }
+
+
+        // ---------------------------------------------------------
+        //  UPDATE PASSWORD /api/Profile/update-password
+        // ---------------------------------------------------------
+        [Authorize]
+        [HttpPut("update-password")]
+        public async Task<IActionResult> UpdatePassword([FromBody] UpdatePasswordDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var userId =
+                User.FindFirstValue("sub") ??
+                User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized("Invalid token.");
+
+            var guid = Guid.Parse(userId);
+
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == guid);
+            if (user == null)
+                return NotFound("User not found.");
+
+            // 1. Vérifier l'ancien mot de passe
+            if (user.PasswordHash != PasswordHasher.Hash(dto.CurrentPassword))
+                return Unauthorized("Current password is incorrect.");
+
+            // 2. Vérifier que le nouveau mot de passe est différent
+            if (dto.CurrentPassword == dto.NewPassword)
+                return BadRequest("New password must be different from the current password.");
+
+            // 3. Mettre à jour le mot de passe
+            user.PasswordHash = PasswordHasher.Hash(dto.NewPassword);
+
+            // 4. Mise à jour dans Students si applicable
+            if (user.UserType == "Student")
+            {
+                var student = await _db.Students.FirstOrDefaultAsync(s => s.Id == guid);
+                if (student != null)
+                    student.PasswordHash = PasswordHasher.Hash(dto.NewPassword);
+            }
+
+            await _db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Password updated successfully. Please login again."
+            });
+        }
+
+
+
+
 
         // ---------------------------------------------------------
         //  UPLOAD AVATAR /api/Profile/avatar

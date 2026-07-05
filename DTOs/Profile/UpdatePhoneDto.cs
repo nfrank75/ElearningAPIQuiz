@@ -2,6 +2,8 @@
 {
     public class UpdatePhoneDto
     {
-        public string? NewPhone { get; set; }
+        public string CurrentPhone { get; set; } = default!;
+        public string NewPhone { get; set; } = default!;
+        public string Password { get; set; } = default!;
     }
 }
