@@ -30,6 +30,11 @@ public class AppDbContext : DbContext
     // EPREUVES
     public DbSet<Epreuve> Epreuves { get; set; }
 
+
+    // PASSWORD RESET OTPS
+    public DbSet<PasswordResetOtp> PasswordResetOtps { get; set; } = default!;
+
+
     // NEW: Dynamic Levels & Subjects
     public DbSet<Level> Levels { get; set; }
     public DbSet<Subject> Subjects { get; set; }

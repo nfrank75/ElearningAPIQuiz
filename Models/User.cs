@@ -8,8 +8,8 @@ public class User
     public string Name { get; set; } = string.Empty;
     public string? FirstName { get; set; }
 
-    public string? Email { get; set; }
-    public string? Phone { get; set; }
+    public string? Email { get; set; } = default!;
+    public string? Phone { get; set; } = default!;
 
     public string PasswordHash { get; set; } = string.Empty;
 

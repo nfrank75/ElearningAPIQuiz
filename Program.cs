@@ -1,10 +1,12 @@
+using dotenv.net;
+using ElearningAPI.Services;
+using ElearningAPI.Settings;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-using dotenv.net;
 
 DotEnv.Load();
 
@@ -104,6 +106,12 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SchemaFilter<GuidSchemaFilter>();
 });
+
+// Email Service
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
+
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 var app = builder.Build();
 

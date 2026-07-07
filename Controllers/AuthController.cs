@@ -1,6 +1,7 @@
 using ElearningAPI.DTOs;
 using ElearningAPI.Helpers;
 using ElearningAPI.Models;
+using ElearningAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,11 +13,15 @@ namespace ElearningAPI.Controllers
     {
         private readonly AppDbContext _db;
         private readonly IConfiguration _config;
+        private readonly IEmailService _emailService;
+        private readonly int _otpExpirationMinutes;
 
-        public AuthController(AppDbContext db, IConfiguration config)
+        public AuthController(AppDbContext db, IConfiguration config, IEmailService emailService)
         {
             _db = db;
             _config = config;
+            _emailService = emailService;
+            _otpExpirationMinutes = _config.GetValue<int>("OtpSettings:ExpirationMinutes");
         }
 
         // ---------------- SIGNUP STUDENT ----------------
@@ -323,6 +328,185 @@ namespace ElearningAPI.Controllers
                 code = 200
             });
         }
+
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Email))
+                return BadRequest("Email is required.");
+
+            // Récupérer l'utilisateur
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+
+            // Réponse générique (sécurité OWASP)
+            if (user == null)
+                return Ok(new { message = "If an account exists, an OTP has been sent." });
+
+            // Vérifier que l'email de l'utilisateur est valide
+            if (string.IsNullOrWhiteSpace(user.Email))
+                return BadRequest("User email is invalid.");
+
+            // Générer OTP (6 chiffres)
+            var otp = new Random().Next(100000, 999999).ToString();
+
+            var otpHash = PasswordHasher.Hash(otp);
+
+            var resetOtp = new PasswordResetOtp
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                OtpHash = otpHash,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(_otpExpirationMinutes),
+                Used = false,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _db.PasswordResetOtps.Add(resetOtp);
+            await _db.SaveChangesAsync();
+
+            var body = $@"
+            <p>Bonjour,</p>
+            <p>Votre code OTP pour réinitialiser votre mot de passe est :</p>
+            <h2>{otp}</h2>
+            <p>Ce code expire dans <strong>10 minutes</strong>.</p>
+            <p>Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>
+            <p>Cordialement,</p>
+            <p>Smart Learn App</p>
+            ";  
+
+            await _emailService.SendAsync(user.Email, "Password Reset OTP", body);
+
+            return Ok(new { message = "If an account exists, an OTP has been sent." });
+        }
+
+
+        [HttpPost("verify-otp")]
+        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Otp))
+                return BadRequest("OTP is required.");
+
+            var otpEntry = await _db.PasswordResetOtps
+                .FirstOrDefaultAsync(o => o.OtpHash == PasswordHasher.Hash(dto.Otp));
+
+            if (otpEntry == null)
+                return BadRequest("Invalid OTP.");
+
+            var now = DateTime.UtcNow;
+
+            // Vérifier expiration
+            if (otpEntry.ExpiresAt < now)
+                return BadRequest($"OTP expired. Validity was {_otpExpirationMinutes} minutes.");
+
+            if (otpEntry.Used)
+                return BadRequest("OTP already used.");
+
+            // Calcul du temps restant
+            var remaining = otpEntry.ExpiresAt - now;
+            var remainingSeconds = (int)remaining.TotalSeconds;
+
+            return Ok(new
+            {
+                message = "OTP valid. You may now reset your password.",
+                expiresInSeconds = remainingSeconds,
+                expiresInMinutes = remainingSeconds / 60
+            });
+        }
+
+
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Otp))
+                return BadRequest("OTP is required.");
+
+            if (string.IsNullOrWhiteSpace(dto.NewPassword))
+                return BadRequest("New password is required.");
+
+            if (dto.NewPassword != dto.ConfirmPassword)
+                return BadRequest("Passwords do not match.");
+
+            var otpEntry = await _db.PasswordResetOtps
+                .FirstOrDefaultAsync(o => o.OtpHash == PasswordHasher.Hash(dto.Otp));
+
+            if (otpEntry == null)
+                return BadRequest("Invalid OTP.");
+
+            var now = DateTime.UtcNow;
+
+            // Vérifier expiration
+            if (otpEntry.ExpiresAt < now)
+                return BadRequest("OTP expired. Please request a new code.");
+
+            // Vérifier si déjà utilisé
+            if (otpEntry.Used)
+                return BadRequest("OTP already used.");
+
+            // Récupérer l'utilisateur
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == otpEntry.UserId);
+
+            if (user == null)
+                return BadRequest("User not found.");
+
+            // Mettre à jour le mot de passe
+            user.PasswordHash = PasswordHasher.Hash(dto.NewPassword);
+
+            // Invalider l’OTP
+            otpEntry.Used = true;
+
+            await _db.SaveChangesAsync();
+
+            return Ok(new { message = "Password reset successful." });
+        }
+
+
+        [HttpPost("resend-otp")]
+        public async Task<IActionResult> ResendOtp([FromBody] ResendOtpDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Email))
+                return BadRequest("Email is required.");
+
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+
+            // Réponse générique (sécurité OWASP)
+            if (user == null)
+                return Ok(new { message = "If an account exists, a new OTP has been sent." });
+
+            // Générer un nouveau OTP
+            var otp = new Random().Next(100000, 999999).ToString();
+            var otpHash = PasswordHasher.Hash(otp);
+
+            // Charger la durée depuis appsettings.json
+            var expirationMinutes = _config.GetValue<int>("OtpSettings:ExpirationMinutes");
+
+            var resetOtp = new PasswordResetOtp
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                OtpHash = otpHash,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(expirationMinutes),
+                Used = false,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _db.PasswordResetOtps.Add(resetOtp);
+            await _db.SaveChangesAsync();
+
+            var body = $@"
+            <p>Bonjour,</p>
+            <p>Votre nouveau code OTP est :</p>
+            <h2>{otp}</h2>
+            <p>Ce code expire dans <strong>{expirationMinutes} minutes</strong>.</p>
+            ";
+
+            await _emailService.SendAsync(user.Email, "New Password Reset OTP", body);
+
+            return Ok(new { message = "If an account exists, a new OTP has been sent." });
+        }
+
+
+
 
 
     }
