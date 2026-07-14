@@ -1,0 +1,86 @@
+@model IEnumerable<AdminSmartLearn.Models.SubjectDto>
+@{
+    ViewData["Title"] = "Gestion des Matières";
+}
+
+<div class="page-header d-print-none">
+  <div class="container-xl">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <h2 class="page-title">
+          Matières
+        </h2>
+      </div>
+      <div class="col-auto ms-auto d-print-none">
+        <div class="btn-list">
+          <a asp-action="Create" class="btn btn-primary d-none d-sm-inline-block">
+            <i class="ti ti-plus"></i>
+            Nouvelle Matière
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="container-xl">
+    
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible" role="alert">
+          <div class="d-flex">
+            <div><i class="ti ti-check icon alert-icon"></i></div>
+            <div>@TempData["SuccessMessage"]</div>
+          </div>
+          <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+        </div>
+    }
+    
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible" role="alert">
+          <div class="d-flex">
+            <div><i class="ti ti-alert-circle icon alert-icon"></i></div>
+            <div>@TempData["ErrorMessage"]</div>
+          </div>
+          <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+        </div>
+    }
+
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Description</th>
+              <th class="w-1"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                  <td>@item.Name</td>
+                  <td class="text-muted">@item.Description</td>
+                  <td>
+                    <div class="btn-list flex-nowrap">
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-white">
+                          Éditer
+                        </a>
+                        <form asp-action="Delete" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette matière ?');">
+                            <button type="submit" class="btn btn-danger">
+                              Supprimer
+                            </button>
+                        </form>
+                    </div>
+                  </td>
+                </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

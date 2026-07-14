@@ -1,0 +1,137 @@
+@model AdminSmartLearn.Models.ProfileUpdateDto
+@{
+    ViewData["Title"] = "Mon Profil";
+}
+
+<div class="page-header d-print-none">
+  <div class="container-xl">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <h2 class="page-title">
+          Mon Profil Administrateur
+        </h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="container-xl">
+    
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible" role="alert">
+          <div class="d-flex">
+            <div><i class="ti ti-check icon alert-icon"></i></div>
+            <div>@TempData["SuccessMessage"]</div>
+          </div>
+          <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+        </div>
+    }
+    
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible" role="alert">
+          <div class="d-flex">
+            <div><i class="ti ti-alert-circle icon alert-icon"></i></div>
+            <div>@TempData["ErrorMessage"]</div>
+          </div>
+          <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+        </div>
+    }
+
+    <div class="card">
+      <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs">
+          <li class="nav-item">
+            <a href="#tabs-profile" class="nav-link active" data-bs-toggle="tab">Informations</a>
+          </li>
+          <li class="nav-item">
+            <a href="#tabs-email" class="nav-link" data-bs-toggle="tab">Email</a>
+          </li>
+          <li class="nav-item">
+            <a href="#tabs-phone" class="nav-link" data-bs-toggle="tab">Téléphone</a>
+          </li>
+          <li class="nav-item">
+            <a href="#tabs-avatar" class="nav-link" data-bs-toggle="tab">Avatar</a>
+          </li>
+        </ul>
+      </div>
+      <div class="card-body">
+        <div class="tab-content">
+          <!-- Profile Info Tab -->
+          <div class="tab-pane active show" id="tabs-profile">
+            <form asp-action="UpdateInfo" method="post">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label" asp-for="Name">Nom</label>
+                  <input type="text" class="form-control" asp-for="Name">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label" asp-for="FirstName">Prénom</label>
+                  <input type="text" class="form-control" asp-for="FirstName">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label" asp-for="Country">Pays</label>
+                  <input type="text" class="form-control" asp-for="Country">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label" asp-for="City">Ville</label>
+                  <input type="text" class="form-control" asp-for="City">
+                </div>
+              </div>
+              <div class="mt-4 text-end">
+                <button type="submit" class="btn btn-primary">Mettre à jour le profil</button>
+              </div>
+            </form>
+          </div>
+          
+          <!-- Email Tab -->
+          <div class="tab-pane" id="tabs-email">
+            <form asp-action="UpdateEmail" method="post">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Nouvel Email</label>
+                  <input type="email" name="NewEmail" class="form-control" required>
+                </div>
+              </div>
+              <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Changer l'email</button>
+              </div>
+            </form>
+          </div>
+          
+          <!-- Phone Tab -->
+          <div class="tab-pane" id="tabs-phone">
+            <form asp-action="UpdatePhone" method="post">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Nouveau Téléphone</label>
+                  <input type="text" name="NewPhone" class="form-control" value="@Model.Phone" required>
+                </div>
+              </div>
+              <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Changer le téléphone</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Avatar Tab -->
+          <div class="tab-pane" id="tabs-avatar">
+            <form asp-action="UploadAvatar" method="post" enctype="multipart/form-data">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Nouvel Avatar</label>
+                  <input type="file" name="avatarFile" class="form-control" accept="image/*" required>
+                </div>
+              </div>
+              <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Uploader l'avatar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

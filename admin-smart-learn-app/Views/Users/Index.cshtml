@@ -1,0 +1,129 @@
+@model IEnumerable<AdminSmartLearn.Models.UserDto>
+@{
+    ViewData["Title"] = "Gestion des Utilisateurs";
+}
+
+<div class="page-header d-print-none">
+  <div class="container-xl">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <h2 class="page-title">
+          Utilisateurs et Administrateurs
+        </h2>
+        <div class="text-muted mt-1">Gérez les comptes et les accès de l'application</div>
+      </div>
+      <div class="col-auto ms-auto d-print-none">
+        <div class="btn-list">
+          <a asp-controller="Auth" asp-action="SignupAdmin" class="btn btn-primary d-none d-sm-inline-block">
+            <i class="ti ti-plus me-1"></i>
+            Créer un Administrateur
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="container-xl">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Liste des utilisateurs</h3>
+      </div>
+      <div class="table-responsive">
+        <table class="table card-table table-vcenter text-nowrap datatable">
+          <thead>
+            <tr>
+              <th>Nom complet</th>
+              <th>Email</th>
+              <th>Téléphone</th>
+              <th>Rôle</th>
+              <th>Statut</th>
+              <th>Date d'inscription</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var user in Model)
+                {
+                    <tr>
+                      <td>
+                        <div class="d-flex py-1 align-items-center">
+                          <span class="avatar me-2 bg-blue-lt">
+                              @(user.Name?.Length >= 2 ? user.Name.Substring(0, 2).ToUpper() : "U")
+                          </span>
+                          <div class="flex-fill">
+                            <div class="font-weight-medium">@user.Name</div>
+                            <div class="text-muted"><a href="#" class="text-reset">@user.Id</a></div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>@user.Email</td>
+                      <td>
+                          @if (!string.IsNullOrEmpty(user.Phone))
+                          {
+                              @user.Phone
+                          }
+                          else
+                          {
+                              <span class="text-muted">-</span>
+                          }
+                      </td>
+                      <td>
+                          @if (user.Role == "Admin")
+                          {
+                              <span class="badge bg-teal-lt">@user.Role</span>
+                          }
+                          else
+                          {
+                              <span class="badge bg-blue-lt">@user.Role</span>
+                          }
+                      </td>
+                      <td>
+                          @if (user.IsActive)
+                          {
+                              <span class="badge bg-success me-1"></span> <text>Actif</text>
+                          }
+                          else
+                          {
+                              <span class="badge bg-danger me-1"></span> <text>Inactif</text>
+                          }
+                      </td>
+                      <td>@user.CreatedAt.ToString("dd/MM/yyyy")</td>
+                      <td class="text-end">
+                          <a href="#" class="btn btn-sm btn-outline-secondary">Détails</a>
+                      </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                        Aucun utilisateur trouvé. (En attente de connexion avec l'API)
+                    </td>
+                </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer d-flex align-items-center">
+        <p class="m-0 text-muted">Affichage des résultats <span>1</span> à <span>@(Model?.Count() ?? 0)</span></p>
+      </div>
+    </div>
+    
+    <div class="alert alert-info mt-4" role="alert">
+      <div class="d-flex">
+        <div>
+          <i class="ti ti-info-circle icon alert-icon"></i>
+        </div>
+        <div>
+          <h4 class="alert-title">Note sur les données</h4>
+          <div class="text-muted">Ces données sont actuellement factices pour des besoins de démonstration de l'interface.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

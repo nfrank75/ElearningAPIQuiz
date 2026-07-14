@@ -1,0 +1,139 @@
+@{
+    ViewData["Title"] = "Gestion des Épreuves";
+    var uncorrected = ViewBag.Uncorrected as IEnumerable<AdminSmartLearn.Models.EpreuveDto>;
+    var corrected = ViewBag.Corrected as IEnumerable<AdminSmartLearn.Models.EpreuveDto>;
+}
+
+<div class="page-header d-print-none">
+  <div class="container-xl">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <h2 class="page-title">
+          Épreuves
+        </h2>
+      </div>
+      <div class="col-auto ms-auto d-print-none">
+        <div class="btn-list">
+          <a asp-action="Upload" class="btn btn-primary d-none d-sm-inline-block">
+            <i class="ti ti-upload"></i>
+            Uploader une Épreuve
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="container-xl">
+    
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible" role="alert">
+          <div class="d-flex">
+            <div><i class="ti ti-check icon alert-icon"></i></div>
+            <div>@TempData["SuccessMessage"]</div>
+          </div>
+          <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+        </div>
+    }
+    
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible" role="alert">
+          <div class="d-flex">
+            <div><i class="ti ti-alert-circle icon alert-icon"></i></div>
+            <div>@TempData["ErrorMessage"]</div>
+          </div>
+          <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+        </div>
+    }
+
+    <div class="row row-cards"> 
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Épreuves Corrigées (@(corrected?.Count() ?? 0))</h3>
+          </div>
+          <div class="list-group list-group-flush list-group-hoverable">
+            @if (corrected != null && corrected.Any())
+            {
+                foreach (var item in corrected)
+                {
+                    <div class="list-group-item">
+                      <div class="row align-items-center">
+                        <div class="col text-truncate">
+                          <span class="text-body d-block font-weight-bold">@item.Title (@item.Year)</span>
+                          <span class="text-muted small text-truncate d-block">ID Matière: @item.SubjectId | ID Niveau: @item.LevelId</span>
+                        </div>
+                        <div class="col-auto">
+                            @{
+                                var fileUrl = !string.IsNullOrEmpty(item.PdfUrl) ? item.PdfUrl :
+                                              !string.IsNullOrEmpty(item.FileUrl) ? item.FileUrl :
+                                              !string.IsNullOrEmpty(item.Url) ? item.Url : item.FilePath;
+                            }
+                            @if (!string.IsNullOrEmpty(fileUrl))
+                            {
+                                var absoluteUrl = fileUrl.StartsWith("http") ? fileUrl : $"http://194.163.185.45:5000{fileUrl}";
+                                <a href="@absoluteUrl" target="_blank" class="btn btn-sm btn-primary" title="Ouvrir le document PDF">
+                                  <i class="ti ti-file-text me-1"></i> Voir Fichier
+                                </a>
+                            }
+                        </div>
+                      </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="list-group-item text-muted">Aucune épreuve corrigée disponible.</div>
+            }
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Épreuves Non Corrigées (@(uncorrected?.Count() ?? 0))</h3>
+          </div>
+          <div class="list-group list-group-flush list-group-hoverable">
+            @if (uncorrected != null && uncorrected.Any())
+            {
+                foreach (var item in uncorrected)
+                {
+                    <div class="list-group-item">
+                      <div class="row align-items-center">
+                        <div class="col text-truncate">
+                          <span class="text-body d-block font-weight-bold">@item.Title (@item.Year)</span>
+                          <span class="text-muted small text-truncate d-block">ID Matière: @item.SubjectId | ID Niveau: @item.LevelId</span>
+                        </div>
+                        <div class="col-auto">
+                            @{
+                                var fileUrlUn = !string.IsNullOrEmpty(item.PdfUrl) ? item.PdfUrl :
+                                                !string.IsNullOrEmpty(item.FileUrl) ? item.FileUrl :
+                                                !string.IsNullOrEmpty(item.Url) ? item.Url : item.FilePath;
+                            }
+                            @if (!string.IsNullOrEmpty(fileUrlUn))
+                            {
+                                var absoluteUrlUn = fileUrlUn.StartsWith("http") ? fileUrlUn : $"http://194.163.185.45:5000{fileUrlUn}";
+                                <a href="@absoluteUrlUn" target="_blank" class="btn btn-sm btn-primary" title="Ouvrir le document PDF">
+                                  <i class="ti ti-file-text me-1"></i> Voir Fichier
+                                </a>
+                            }
+                        </div>
+                      </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="list-group-item text-muted">Aucune épreuve non corrigée disponible.</div>
+            }
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</div>

@@ -1,0 +1,87 @@
+@model IEnumerable<AdminSmartLearn.Models.ScoreDto>
+@{
+    ViewData["Title"] = "Scores des Étudiants";
+}
+
+<div class="page-header d-print-none">
+  <div class="container-xl">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <h2 class="page-title">
+          Scores et Résultats
+        </h2>
+      </div>
+      <div class="col-auto ms-auto d-print-none">
+        <form asp-action="Index" method="get" class="d-flex">
+            <input type="text" name="quizId" value="@ViewBag.QuizId" class="form-control me-2" placeholder="Filtrer par ID Quiz..." />
+            <button type="submit" class="btn btn-primary">Filtrer</button>
+            @if (!string.IsNullOrEmpty(ViewBag.QuizId))
+            {
+                <a asp-action="Index" class="btn btn-white ms-2">Réinitialiser</a>
+            }
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="container-xl">
+    
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <thead>
+            <tr>
+              <th>Étudiant</th>
+              <th>Quiz</th>
+              <th>Score</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var item in Model)
+                {
+                    <tr>
+                      <td>
+                        <div class="d-flex py-1 align-items-center">
+                          <span class="avatar me-2" style="background-image: url('https://ui-avatars.com/api/?name=@Uri.EscapeDataString(item.UserName ?? "User")')"></span>
+                          <div class="flex-fill">
+                            <div class="font-weight-medium">@item.UserName</div>
+                            <div class="text-muted"><small>@item.UserId</small></div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div>@item.QuizTitle</div>
+                        <div class="text-muted"><small>ID: @item.QuizId</small></div>
+                      </td>
+                      <td>
+                        <span class="badge @(item.Value >= (item.MaxValue / 2) ? "bg-success" : "bg-danger") me-1"></span>
+                        @item.Value / @item.MaxValue
+                      </td>
+                      <td class="text-muted">
+                        @item.Date.ToString("g")
+                      </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="4" class="text-center text-muted">Aucun score trouvé.</td>
+                </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

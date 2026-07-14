@@ -1,0 +1,162 @@
+@model IEnumerable<AdminSmartLearn.Models.QuizDto>
+@{
+    ViewData["Title"] = "Gestion des Quiz";
+}
+
+<div class="page-header d-print-none">
+  <div class="container-xl">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <h2 class="page-title">
+          Quiz & Évaluations
+        </h2>
+      </div>
+      <div class="col-auto ms-auto d-print-none">
+        <div class="btn-list">
+          <a asp-action="Create" class="btn btn-primary d-none d-sm-inline-block">
+            <i class="ti ti-plus"></i>
+            Nouveau Quiz
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="container-xl">
+    
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible" role="alert">
+          <div class="d-flex">
+            <div><i class="ti ti-check icon alert-icon"></i></div>
+            <div>@TempData["SuccessMessage"]</div>
+          </div>
+          <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+        </div>
+    }
+    
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible" role="alert">
+          <div class="d-flex">
+            <div><i class="ti ti-alert-circle icon alert-icon"></i></div>
+            <div>@TempData["ErrorMessage"]</div>
+          </div>
+          <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+        </div>
+    }
+
+    <!-- Filtres de recherche -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" asp-action="Index" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Niveau</label>
+                    <select name="levelId" class="form-select" required>
+                        <option value="">-- Sélectionnez un niveau --</option>
+                        @if (ViewBag.Levels != null)
+                        {
+                            foreach (var level in (IEnumerable<SelectListItem>)ViewBag.Levels)
+                            {
+                                if (ViewBag.SelectedLevelId?.ToString() == level.Value)
+                                {
+                                    <option value="@level.Value" selected>@level.Text</option>
+                                }
+                                else
+                                {
+                                    <option value="@level.Value">@level.Text</option>
+                                }
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Matière</label>
+                    <select name="subjectId" class="form-select" required>
+                        <option value="">-- Sélectionnez une matière --</option>
+                        @if (ViewBag.Subjects != null)
+                        {
+                            foreach (var subject in (IEnumerable<SelectListItem>)ViewBag.Subjects)
+                            {
+                                if (ViewBag.SelectedSubjectId?.ToString() == subject.Value)
+                                {
+                                    <option value="@subject.Value" selected>@subject.Text</option>
+                                }
+                                else
+                                {
+                                    <option value="@subject.Value">@subject.Text</option>
+                                }
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">Rechercher</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (ViewBag.PromptSelection == true)
+    {
+        <div class="alert alert-info">
+            <div class="d-flex">
+                <div><i class="ti ti-info-circle icon alert-icon"></i></div>
+                <div>Veuillez sélectionner un Niveau et une Matière pour afficher les quiz correspondants.</div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <thead>
+            <tr>
+              <th>Titre</th>
+              <th>Durée (min)</th>
+              <th>Coefficient</th>
+              <th>Statut</th>
+              <th class="w-1"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                  <td>@item.Title</td>
+                  <td class="text-muted">@item.DurationMinutes min</td>
+                  <td class="text-muted">@item.Coefficient</td>
+                  <td>
+                    @if (item.IsActive)
+                    {
+                        <span class="badge bg-success me-1"></span> <text>Actif</text>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary me-1"></span> <text>Inactif</text>
+                    }
+                  </td>
+                  <td>
+                    <div class="btn-list flex-nowrap">
+                        <a asp-action="Details" asp-route-id="@item.Id" asp-route-levelId="@ViewBag.SelectedLevelId" asp-route-subjectId="@ViewBag.SelectedSubjectId" class="btn btn-white">
+                          Gérer (Questions)
+                        </a>
+                        <form asp-action="Delete" asp-route-id="@item.Id" asp-route-levelId="@ViewBag.SelectedLevelId" asp-route-subjectId="@ViewBag.SelectedSubjectId" method="post" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce quiz ?');">
+                            <button type="submit" class="btn btn-danger">
+                              Supprimer
+                            </button>
+                        </form>
+                    </div>
+                  </td>
+                </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+    }
+  </div>
+</div>
