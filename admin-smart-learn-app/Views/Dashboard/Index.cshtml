@@ -1,0 +1,93 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="page-header d-print-none">
+  <div class="container-xl">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <h2 class="page-title">
+          Dashboard
+        </h2>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="page-body">
+  <div class="container-xl">
+    <div class="row row-deck row-cards">
+      <div class="col-sm-6 col-lg-3">
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="subheader">Niveaux</div>
+            </div>
+            <div class="h1 mb-3">@ViewBag.LevelsCount</div>
+            <div class="d-flex mb-2">
+              <div>Total des niveaux configurés</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="subheader">Matières</div>
+            </div>
+            <div class="h1 mb-3">@ViewBag.SubjectsCount</div>
+            <div class="d-flex mb-2">
+              <div>Total des matières</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="subheader">Quiz</div>
+            </div>
+            <div class="h1 mb-3">@ViewBag.QuizzesCount</div>
+            <div class="d-flex mb-2">
+              <div>Évaluations disponibles</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="subheader">Scores</div>
+            </div>
+            <div class="h1 mb-3">@ViewBag.ScoresCount</div>
+            <div class="d-flex mb-2">
+              <div>Résultats enregistrés</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-12 mt-4">
+        <div class="card card-md">
+          <div class="card-stamp card-stamp-lg">
+            <div class="card-stamp-icon bg-primary">
+              <i class="ti ti-ghost"></i>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-10">
+                <h3 class="h1">Bienvenue sur le tableau de bord Admin !</h3>
+                <div class="markdown text-muted">
+                  Utilisez le menu de gauche pour naviguer dans les différentes sections. Vous pouvez gérer les niveaux, les matières, et les quizzs.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,137 @@
+@model AdminSmartLearn.Models.QuizDto
+@{
+    ViewData["Title"] = "Détails du Quiz";
+}
+
+<div class="page-header d-print-none">
+  <div class="container-xl">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <h2 class="page-title">
+          @Model.Title
+        </h2>
+        <div class="text-muted mt-1">Durée: @Model.DurationMinutes min | Coeff: @Model.Coefficient</div>
+      </div>
+      <div class="col-auto ms-auto d-print-none">
+        <div class="btn-list">
+          <a asp-action="Index" asp-route-levelId="@ViewBag.LevelId" asp-route-subjectId="@ViewBag.SubjectId" class="btn btn-white">Retour à la liste</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="container-xl">
+    
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="row row-cards">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Questions du Quiz (@(Model.Questions?.Count ?? 0))</h3>
+          </div>
+          <div class="list-group list-group-flush">
+            @if (Model.Questions != null && Model.Questions.Any())
+            {
+                foreach (var q in Model.Questions)
+                {
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>@q.Statement</strong>
+                                <div class="text-muted mt-2">
+                                    <em>Options:</em> @string.Join(", ", q.Options ?? new List<string>())
+                                </div>
+                                <div class="text-success"><em>Réponse correcte:</em> @q.CorrectAnswer</div>
+                                <div class="text-muted"><em>Points:</em> @q.Points</div>
+                            </div>
+                            <div>
+                                <form asp-action="DeleteQuestion" asp-route-quizId="@Model.Id" asp-route-questionId="@q.Id" asp-route-levelId="@ViewBag.LevelId" asp-route-subjectId="@ViewBag.SubjectId" method="post" onsubmit="return confirm('Supprimer cette question ?');">
+                                    <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="list-group-item text-muted">Aucune question n'a été ajoutée à ce quiz.</div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <form asp-action="AddQuestion" asp-route-levelId="@ViewBag.LevelId" asp-route-subjectId="@ViewBag.SubjectId" method="post" class="card">
+            <input type="hidden" name="quizId" value="@Model.Id" />
+          <div class="card-header">
+            <h3 class="card-title">Ajouter une Question</h3>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label required">Énoncé</label>
+              <textarea name="Statement" class="form-control" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required">Options (séparées par des virgules)</label>
+              <input type="text" name="OptionsList" class="form-control" placeholder="Option A, Option B, Option C..." required>
+              <small class="form-hint">Entrez les choix possibles séparés par une virgule.</small>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required">Réponse Correcte</label>
+              <input type="text" name="CorrectAnswer" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label required">Points</label>
+              <input type="number" step="0.5" name="Points" class="form-control" value="1" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Explication (optionnel)</label>
+              <textarea name="Explanation" class="form-control" rows="2"></textarea>
+            </div>
+          </div>
+          <div class="card-footer text-end">
+            <button type="submit" class="btn btn-primary">Ajouter</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Intercept form submission to parse options string into an array
+        document.querySelector('form[action*="AddQuestion"]').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const optionsInput = form.querySelector('input[name="OptionsList"]');
+            const options = optionsInput.value.split(',').map(item => item.trim());
+            
+            // Remove the temporary input
+            optionsInput.name = ''; 
+            
+            // Append hidden inputs for each option (ASP.NET Core binds Options[0], Options[1], etc.)
+            options.forEach((opt, index) => {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = `Options[${index}]`;
+                hiddenInput.value = opt;
+                form.appendChild(hiddenInput);
+            });
+            
+            form.submit();
+        });
+    </script>
+}

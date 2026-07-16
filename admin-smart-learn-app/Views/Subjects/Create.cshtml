@@ -1,0 +1,51 @@
+@model AdminSmartLearn.Models.CreateSubjectDto
+@{
+    ViewData["Title"] = "Créer une Matière";
+}
+
+<div class="page-header d-print-none">
+  <div class="container-xl">
+    <div class="row g-2 align-items-center">
+      <div class="col">
+        <h2 class="page-title">
+          Créer une nouvelle matière
+        </h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-body">
+  <div class="container-xl">
+    <div class="row row-cards">
+      <div class="col-12">
+        <form asp-action="Create" method="post" class="card">
+          <div class="card-body">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            
+            <div class="mb-3">
+              <label class="form-label required" asp-for="Name">Nom</label>
+              <div>
+                <input type="text" class="form-control" asp-for="Name" placeholder="Ex: Mathématiques, SVT..." required>
+                <span asp-validation-for="Name" class="text-danger"></span>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" asp-for="Description">Description</label>
+              <div>
+                <textarea class="form-control" asp-for="Description" rows="3"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer text-end">
+            <div class="d-flex">
+              <a asp-action="Index" class="btn btn-link">Annuler</a>
+              <button type="submit" class="btn btn-primary ms-auto">Créer la matière</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

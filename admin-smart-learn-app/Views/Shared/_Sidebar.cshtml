@@ -1,0 +1,83 @@
+<aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
+  <div class="container-fluid">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu" aria-controls="sidebar-menu" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <h1 class="navbar-brand navbar-brand-autodark">
+      <a href="/" class="d-flex align-items-center text-decoration-none">
+        <img src="~/img/logo.png" alt="SmartLearn Logo" height="120" class="me-2">
+        <!--<span class="fs-2 fw-bold text-primary">SmartLearn</span>&nbsp;Admin-->
+      </a>
+    </h1>
+    <div class="collapse navbar-collapse" id="sidebar-menu">
+      <ul class="navbar-nav pt-lg-3">
+        <li class="nav-item">
+          <a class="nav-link" asp-controller="Dashboard" asp-action="Index">
+            <span class="nav-link-icon d-md-none d-lg-inline-block">
+              <i class="ti ti-home fs-2"></i>
+            </span>
+            <span class="nav-link-title">
+              Dashboard
+            </span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" asp-controller="Levels" asp-action="Index">
+            <span class="nav-link-icon d-md-none d-lg-inline-block">
+              <i class="ti ti-layers fs-2"></i>
+            </span>
+            <span class="nav-link-title">
+              Niveaux
+            </span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" asp-controller="Subjects" asp-action="Index">
+            <span class="nav-link-icon d-md-none d-lg-inline-block">
+              <i class="ti ti-book fs-2"></i>
+            </span>
+            <span class="nav-link-title">
+              Matières
+            </span>
+          </a>
+        </li>
+          <li class="nav-item">
+            <a class="nav-link" asp-controller="Quizzes" asp-action="Index">
+              <span class="nav-link-icon d-md-none d-lg-inline-block"><i class="ti ti-check bg-blue text-white rounded"></i></span>
+              <span class="nav-link-title">Quiz & Évaluations</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" asp-controller="Epreuves" asp-action="Index">
+              <span class="nav-link-icon d-md-none d-lg-inline-block"><i class="ti ti-file-upload bg-orange text-white rounded"></i></span>
+              <span class="nav-link-title">Épreuves</span>
+            </a>
+          </li>
+          <!--<li class="nav-item">
+            <a class="nav-link" asp-controller="Scores" asp-action="Index">
+              <span class="nav-link-icon d-md-none d-lg-inline-block"><i class="ti ti-trophy bg-yellow text-white rounded"></i></span>
+              <span class="nav-link-title">Scores</span>
+            </a>
+          </li>-->
+          <li class="nav-item">
+            <a class="nav-link" asp-controller="Profile" asp-action="Index">
+              <span class="nav-link-icon d-md-none d-lg-inline-block"><i class="ti ti-user bg-dark text-white rounded"></i></span>
+              <span class="nav-link-title">Mon Profil</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" asp-controller="Users" asp-action="Index">
+              <span class="nav-link-icon d-md-none d-lg-inline-block"><i class="ti ti-users bg-purple text-white rounded"></i></span>
+              <span class="nav-link-title">Utilisateurs</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" asp-controller="Auth" asp-action="SignupAdmin">
+              <span class="nav-link-icon d-md-none d-lg-inline-block"><i class="ti ti-user-plus bg-teal text-white rounded"></i></span>
+              <span class="nav-link-title">Créer Admin</span>
+            </a>
+          </li>
+      </ul>
+    </div>
+  </div>
+</aside>

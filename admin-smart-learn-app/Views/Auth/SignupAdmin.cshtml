@@ -1,0 +1,88 @@
+@model AdminSmartLearn.Models.AdminSignupDto
+@{
+    Layout = null;
+}
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+    <title>Créer un compte Admin - SmartLearn</title>
+    <!-- CSS files -->
+    <link href="https://cdn.jsdelivr.net/npm/@@tabler/core@1.0.0-beta17/dist/css/tabler.min.css" rel="stylesheet"/>
+    <style>
+      @@import url('https://rsms.me/inter/inter.css');
+      :root {
+      	--tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
+      }
+      body {
+      	font-feature-settings: "cv03", "cv04", "cv11";
+      }
+    </style>
+  </head>
+  <body class=" d-flex flex-column">
+    <div class="page page-center">
+      <div class="container container-tight py-4">
+        <div class="text-center mb-4">
+          <a href="." class="navbar-brand navbar-brand-autodark"><span class="fs-1 fw-bold text-primary">SmartLearn</span> Admin</a>
+        </div>
+        <form asp-action="SignupAdmin" method="post" class="card card-md">
+          <div class="card-body">
+            <h2 class="card-title text-center mb-4">Créer un nouveau compte administrateur</h2>
+            
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible" role="alert">
+                  <div class="d-flex">
+                    <div><i class="ti ti-check icon alert-icon"></i></div>
+                    <div>@TempData["SuccessMessage"]</div>
+                  </div>
+                  <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+                </div>
+            }
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+              <label class="form-label required" asp-for="Name">Nom Complet</label>
+              <input type="text" class="form-control" asp-for="Name" placeholder="Entrez le nom complet" required>
+              <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label required" asp-for="Email">Adresse Email</label>
+              <input type="email" class="form-control" asp-for="Email" placeholder="Entrez l'email" required>
+              <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" asp-for="Phone">Téléphone</label>
+              <input type="text" class="form-control" asp-for="Phone" placeholder="Entrez le numéro de téléphone">
+              <span asp-validation-for="Phone" class="text-danger"></span>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label required" asp-for="Password">Mot de passe</label>
+              <div class="input-group input-group-flat">
+                <input type="password" class="form-control" asp-for="Password" placeholder="Mot de passe" required>
+              </div>
+              <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+
+            <div class="form-footer">
+              <button type="submit" class="btn btn-primary w-100">Créer le compte</button>
+            </div>
+          </div>
+        </form>
+        <div class="text-center text-muted mt-3">
+          Vous avez déjà un compte ? <a asp-action="Login" tabindex="-1">Se connecter</a>
+        </div>
+      </div>
+    </div>
+    <!-- Libs JS -->
+    <!-- Tabler Core -->
+    <script src="https://cdn.jsdelivr.net/npm/@@tabler/core@1.0.0-beta17/dist/js/tabler.min.js" defer></script>
+  </body>
+</html>
