@@ -26,4 +26,7 @@ public class Student
 
     public string? AvatarUrl { get; set; }
     public bool IsMember { get; set; } = false;
+
+    public bool IsActive { get; set; } = true;
+
 }

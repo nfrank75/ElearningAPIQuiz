@@ -179,17 +179,27 @@ namespace ElearningAPI.Controllers
 
             User? user = null;
 
+            // Recherche par email
             if (!string.IsNullOrWhiteSpace(dto.Email))
                 user = await _db.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
 
+            // Recherche par téléphone
             if (user == null && !string.IsNullOrWhiteSpace(dto.Phone))
                 user = await _db.Users.FirstOrDefaultAsync(u => u.Phone == dto.Phone);
 
             if (user == null)
                 return Unauthorized("Invalid credentials");
 
+            // Vérification du mot de passe
             if (user.PasswordHash != PasswordHasher.Hash(dto.Password))
                 return Unauthorized("Invalid password");
+
+            // Activer le compte si première connexion
+            if (!user.IsActive)
+            {
+                user.IsActive = true;
+                await _db.SaveChangesAsync();
+            }
 
             // Génération des tokens
             var accessToken = JwtHelper.GenerateAccessToken(user, _config);
@@ -216,6 +226,13 @@ namespace ElearningAPI.Controllers
 
                 if (student == null)
                     return NotFound("Student profile not found");
+
+                // Activer le compte Student si première connexion
+                if (!student.IsActive)
+                {
+                    student.IsActive = true;
+                    await _db.SaveChangesAsync();
+                }
 
                 return Ok(new
                 {
